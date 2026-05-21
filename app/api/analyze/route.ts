@@ -11,7 +11,6 @@ export const maxDuration = 60
 
 export async function POST(request: Request) {
   try {
-    // 1. Auth check
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -19,7 +18,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 2. Parse multipart form
     const formData = await request.formData()
     const cvFile = formData.get('cv') as File | null
     const jobDescription = formData.get('jobDescription') as string | null
@@ -33,7 +31,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // 3. Validate file
     if (cvFile.type !== 'application/pdf') {
       return NextResponse.json(
         { error: 'Only PDF files are supported' },
@@ -48,23 +45,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // 4. Extract PDF text
     const arrayBuffer = await cvFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     let cvText: string
 
     try {
       cvText = await extractTextFromPDF(buffer)
-    } catch (err) {
+    } catch (parseError) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Failed to parse PDF' },
+        { error: parseError instanceof Error ? parseError.message : 'Failed to parse PDF' },
         { status: 422 }
       )
     }
 
     cvText = truncateCVText(cvText)
 
-    // 5. Create pending analysis record
     const { data: analysis, error: insertError } = await supabase
       .from('analyses')
       .insert({
@@ -85,7 +80,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // 6. Build prompt and call OpenAI
     const prompt = buildAnalysisPrompt({
       cvText,
       jobDescription: jobDescription.slice(0, 10000),
@@ -113,8 +107,7 @@ export async function POST(request: Request) {
       if (!content) throw new Error('Empty response from OpenAI')
 
       rawResult = JSON.parse(content)
-    } catch (err) {
-      // Mark as failed and return error
+    } catch (_aiError) {
       await supabase
         .from('analyses')
         .update({ status: 'failed' })
@@ -126,7 +119,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // 7. Compute weighted overall score
     const overall = computeOverallScore({
       skills: rawResult.score?.skills ?? rawResult.skills ?? 50,
       keywords: rawResult.score?.keywords ?? rawResult.keywords ?? 50,
@@ -149,7 +141,6 @@ export async function POST(request: Request) {
       suggestions: rawResult.suggestions ?? [],
     }
 
-    // 8. Save completed result
     await supabase
       .from('analyses')
       .update({ status: 'completed', result: finalResult })
