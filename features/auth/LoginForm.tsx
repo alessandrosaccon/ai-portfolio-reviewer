@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,6 +22,7 @@ type LoginFields = z.infer<typeof schema>
 export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const {
     register,
@@ -37,7 +39,11 @@ export function LoginForm() {
       fd.set('email', data.email)
       fd.set('password', data.password)
       const result = await login(fd)
-      if (result?.error) setServerError(result.error)
+      if (result?.error) {
+        setServerError(result.error)
+      } else if (result?.redirectTo) {
+        router.push(result.redirectTo)
+      }
     })
   }
 
