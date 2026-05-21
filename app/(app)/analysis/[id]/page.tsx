@@ -17,6 +17,15 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+interface AnalysisRow {
+  id: string
+  status: string
+  job_title: string | null
+  company: string | null
+  created_at: string
+  result: unknown
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params
   const supabase = await createClient()
@@ -26,10 +35,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .eq('id', id)
     .single()
 
-  if (!data) return { title: 'Analysis' }
+  const row = data as Pick<AnalysisRow, 'job_title' | 'company'> | null
+  if (!row) return { title: 'Analysis' }
   return {
-    title: data.job_title
-      ? `${data.job_title}${data.company ? ` at ${data.company}` : ''}`
+    title: row.job_title
+      ? `${row.job_title}${row.company ? ` at ${row.company}` : ''}`
       : 'Analysis Result',
   }
 }
@@ -38,15 +48,16 @@ export default async function AnalysisPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: analysis, error } = await supabase
+  const { data, error } = await supabase
     .from('analyses')
     .select('*')
     .eq('id', id)
     .single()
 
+  const analysis = data as AnalysisRow | null
+
   if (error || !analysis) notFound()
 
-  // Render processing/failed states
   if (analysis.status === 'pending' || analysis.status === 'processing') {
     return <ProcessingState id={id} />
   }
@@ -60,7 +71,6 @@ export default async function AnalysisPage({ params }: PageProps) {
 
   return (
     <div className="container max-w-3xl py-10">
-      {/* Back nav */}
       <div className="mb-8 flex items-center justify-between">
         <Link
           href="/dashboard"
@@ -77,7 +87,6 @@ export default async function AnalysisPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Title */}
       <div className="mb-8 flex flex-col gap-1">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           {analysis.job_title ?? 'Analysis result'}
@@ -86,11 +95,10 @@ export default async function AnalysisPage({ params }: PageProps) {
           )}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Here\'s how your CV matches the job description.
+          Here&apos;s how your CV matches the job description.
         </p>
       </div>
 
-      {/* Result sections */}
       <div className="flex flex-col gap-6">
         <ScoreCard
           score={result.score}
@@ -113,12 +121,9 @@ export default async function AnalysisPage({ params }: PageProps) {
           <SuggestionsList suggestions={result.suggestions} />
         )}
 
-        {/* Footer actions */}
         <div className="flex items-center justify-between border-t border-border pt-6">
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/new">
-              Run new analysis
-            </Link>
+            <Link href="/dashboard/new">Run new analysis</Link>
           </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href="/history">View history</Link>
