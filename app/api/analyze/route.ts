@@ -26,30 +26,18 @@ export async function POST(request: Request) {
     const company = formData.get('company') as string | null
 
     if (!cvFile || !jobDescription) {
-      return NextResponse.json(
-        { error: 'Missing required fields: cv and jobDescription' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Missing required fields: cv and jobDescription' }, { status: 400 })
     }
-
     if (cvFile.type !== 'application/pdf') {
-      return NextResponse.json(
-        { error: 'Only PDF files are supported' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Only PDF files are supported' }, { status: 400 })
     }
-
     if (cvFile.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'File size must be under 5MB' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'File size must be under 5MB' }, { status: 400 })
     }
 
     const arrayBuffer = await cvFile.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
     let cvText: string
-
     try {
       cvText = await extractTextFromPDF(buffer)
     } catch (parseError) {
@@ -75,10 +63,7 @@ export async function POST(request: Request) {
       .single()
 
     if (insertError || !analysis) {
-      return NextResponse.json(
-        { error: 'Failed to create analysis record' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Failed to create analysis record' }, { status: 500 })
     }
 
     const prompt = buildAnalysisPrompt({
@@ -103,21 +88,12 @@ export async function POST(request: Request) {
         temperature: 0.3,
         response_format: { type: 'json_object' },
       })
-
       const content = completion.choices[0]?.message?.content
       if (!content) throw new Error('Empty response from OpenAI')
-
       rawResult = JSON.parse(content)
     } catch (_aiError) {
-      await supabase
-        .from('analyses')
-        .update({ status: 'failed' })
-        .eq('id', analysis.id)
-
-      return NextResponse.json(
-        { error: 'AI analysis failed. Please try again.' },
-        { status: 500 }
-      )
+      await supabase.from('analyses').update({ status: 'failed' }).eq('id', analysis.id)
+      return NextResponse.json({ error: 'AI analysis failed. Please try again.' }, { status: 500 })
     }
 
     const overall = computeOverallScore({
@@ -142,17 +118,11 @@ export async function POST(request: Request) {
       suggestions: rawResult.suggestions ?? [],
     }
 
-    await supabase
-      .from('analyses')
-      .update({ status: 'completed', result: finalResult })
-      .eq('id', analysis.id)
+    await supabase.from('analyses').update({ status: 'completed', result: finalResult }).eq('id', analysis.id)
 
     return NextResponse.json({ id: analysis.id, result: finalResult })
   } catch (err) {
     console.error('[/api/analyze]', err)
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })
   }
 }

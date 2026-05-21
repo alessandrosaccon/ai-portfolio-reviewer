@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -19,44 +20,29 @@ type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFields>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
     resolver: zodResolver(schema),
   })
 
   async function onSubmit(data: LoginFields) {
     setServerError(null)
-    setDebugInfo(null)
     setIsPending(true)
-
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.email, password: data.password }),
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
       })
-
-      const json = await res.json()
-      setDebugInfo(`Status: ${res.status} | Response: ${JSON.stringify(json)}`)
-
-      if (!res.ok || json.error) {
-        setServerError(json.error || 'Login failed. Please try again.')
+      if (error) {
+        setServerError(error.message)
         setIsPending(false)
         return
       }
-
-      setDebugInfo(`Status: ${res.status} | OK — redirecting...`)
       window.location.href = '/dashboard'
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setServerError('Unexpected error: ' + msg)
-      setDebugInfo('Exception: ' + msg)
+    } catch {
+      setServerError('An unexpected error occurred. Please try again.')
       setIsPending(false)
     }
   }
@@ -65,65 +51,26 @@ export function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          aria-invalid={!!errors.email}
-          {...register('email')}
-        />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
+        <Input id="email" type="email" placeholder="you@example.com" autoComplete="email" aria-invalid={!!errors.email} {...register('email')} />
+        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
       </div>
-
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link
-            href="/forgot-password"
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Forgot password?
-          </Link>
+          <Link href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">Forgot password?</Link>
         </div>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          aria-invalid={!!errors.password}
-          {...register('password')}
-        />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
+        <Input id="password" type="password" placeholder="••••••••" autoComplete="current-password" aria-invalid={!!errors.password} {...register('password')} />
+        {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
       </div>
-
-      {debugInfo && (
-        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 font-mono text-xs text-yellow-700 dark:text-yellow-300 break-all">
-          {debugInfo}
-        </div>
-      )}
-
       {serverError && (
-        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {serverError}
-        </div>
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{serverError}</div>
       )}
-
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
-        ) : 'Sign in'}
+        {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</> : 'Sign in'}
       </Button>
-
       <p className="text-center text-xs text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
-          Sign up
-        </Link>
+        <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">Sign up</Link>
       </p>
     </form>
   )
