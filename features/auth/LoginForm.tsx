@@ -1,7 +1,6 @@
 'use client'
 
 import { useTransition, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -22,7 +21,6 @@ type LoginFields = z.infer<typeof schema>
 export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
 
   const {
     register,
@@ -41,9 +39,9 @@ export function LoginForm() {
       const result = await login(fd)
       if (result?.error) {
         setServerError(result.error)
-      } else if (result?.redirectTo) {
-        router.refresh()
-        router.push(result.redirectTo)
+      } else {
+        // Force full page reload so middleware reads fresh session cookies
+        window.location.href = '/dashboard'
       }
     })
   }
