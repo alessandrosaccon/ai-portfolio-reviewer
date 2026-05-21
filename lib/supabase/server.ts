@@ -14,13 +14,15 @@ export async function createClient() {
           return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+          // In Server Actions cookies() is mutable — must set without swallowing errors
+          cookiesToSet.forEach(({ name, value, options }) => {
+            try {
               cookieStore.set(name, value, options)
-            )
-          } catch {
-            // Called from Server Component — mutations ignored safely
-          }
+            } catch {
+              // Safe to ignore only in read-only Server Component context
+              // In Server Actions this should succeed
+            }
+          })
         },
       },
     }
