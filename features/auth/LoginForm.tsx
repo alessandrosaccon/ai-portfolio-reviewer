@@ -42,6 +42,7 @@ export function LoginForm() {
       if (result?.error) {
         setServerError(result.error)
       } else if (result?.redirectTo) {
+        router.refresh()
         router.push(result.redirectTo)
       }
     })
