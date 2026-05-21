@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { login } from './actions'
+import { createBrowserClient } from '@supabase/ssr'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -20,7 +20,7 @@ type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
   const {
     register,
@@ -30,20 +30,33 @@ export function LoginForm() {
     resolver: zodResolver(schema),
   })
 
-  function onSubmit(data: LoginFields) {
+  async function onSubmit(data: LoginFields) {
     setServerError(null)
-    startTransition(async () => {
-      const fd = new FormData()
-      fd.set('email', data.email)
-      fd.set('password', data.password)
-      const result = await login(fd)
-      if (result?.error) {
-        setServerError(result.error)
-      } else {
-        // Force full page reload so middleware reads fresh session cookies
-        window.location.href = '/dashboard'
+    setIsPending(true)
+
+    try {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+
+      if (error) {
+        setServerError(error.message)
+        setIsPending(false)
+        return
       }
-    })
+
+      // Hard redirect — browser sends fresh request with session cookies
+      window.location.href = '/dashboard'
+    } catch {
+      setServerError('An unexpected error occurred. Please try again.')
+      setIsPending(false)
+    }
   }
 
   return (
