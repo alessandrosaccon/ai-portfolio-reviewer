@@ -6,11 +6,9 @@ import type { UserProfile } from '@/types/user'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (!session) redirect('/login')
-
-  const user = session.user
+  if (error || !user) redirect('/login')
 
   const profile: UserProfile = {
     id: user.id,
