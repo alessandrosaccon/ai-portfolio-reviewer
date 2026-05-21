@@ -23,15 +23,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar — desktop only */}
+      {/* Sidebar — desktop */}
       <div className="hidden md:flex">
         <Sidebar user={profile} />
       </div>
 
-      {/* Main content */}
+      {/* Main */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <AppHeader />
-        <main className="flex-1 overflow-y-auto">
+        <AppHeader user={profile} />
+        <main className="flex-1 overflow-y-auto" id="main-content">
           {children}
         </main>
       </div>
