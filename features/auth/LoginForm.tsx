@@ -19,6 +19,7 @@ type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
 
   const {
@@ -31,6 +32,7 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFields) {
     setServerError(null)
+    setDebugInfo(null)
     setIsPending(true)
 
     try {
@@ -41,6 +43,7 @@ export function LoginForm() {
       })
 
       const json = await res.json()
+      setDebugInfo(`Status: ${res.status} | Response: ${JSON.stringify(json)}`)
 
       if (!res.ok || json.error) {
         setServerError(json.error || 'Login failed. Please try again.')
@@ -48,9 +51,12 @@ export function LoginForm() {
         return
       }
 
+      setDebugInfo(`Status: ${res.status} | OK — redirecting...`)
       window.location.href = '/dashboard'
-    } catch {
-      setServerError('An unexpected error occurred. Please try again.')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setServerError('Unexpected error: ' + msg)
+      setDebugInfo('Exception: ' + msg)
       setIsPending(false)
     }
   }
@@ -95,6 +101,12 @@ export function LoginForm() {
         )}
       </div>
 
+      {debugInfo && (
+        <div className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2 font-mono text-xs text-yellow-700 dark:text-yellow-300 break-all">
+          {debugInfo}
+        </div>
+      )}
+
       {serverError && (
         <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {serverError}
@@ -103,7 +115,7 @@ export function LoginForm() {
 
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? (
-          <><Loader2 className="h-4 w-4 animate-spin" />Signing in…</>
+          <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
         ) : 'Sign in'}
       </Button>
 
