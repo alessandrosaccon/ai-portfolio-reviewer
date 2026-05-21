@@ -9,7 +9,6 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createBrowserClient } from '@supabase/ssr'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -35,23 +34,20 @@ export function LoginForm() {
     setIsPending(true)
 
     try {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email, password: data.password }),
       })
 
-      if (error) {
-        setServerError(error.message)
+      const json = await res.json()
+
+      if (!res.ok || json.error) {
+        setServerError(json.error || 'Login failed. Please try again.')
         setIsPending(false)
         return
       }
 
-      // Hard redirect — browser sends fresh request with session cookies
       window.location.href = '/dashboard'
     } catch {
       setServerError('An unexpected error occurred. Please try again.')
@@ -100,31 +96,20 @@ export function LoginForm() {
       </div>
 
       {serverError && (
-        <div
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-        >
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {serverError}
         </div>
       )}
 
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Signing in…
-          </>
-        ) : (
-          'Sign in'
-        )}
+          <><Loader2 className="h-4 w-4 animate-spin" />Signing in…</>
+        ) : 'Sign in'}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link
-          href="/signup"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-        >
+        <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
           Sign up
         </Link>
       </p>
