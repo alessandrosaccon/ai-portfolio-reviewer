@@ -1,12 +1,41 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { Sidebar } from '@/components/shared/Sidebar'
 import { AppHeader } from '@/components/shared/AppHeader'
 import type { UserProfile } from '@/types/user'
 
+function getSessionFromCookieStore(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  const cookieName = cookieStore.getAll()
+    .map((c) => c.name)
+    .find((name) => name.startsWith('sb-') && name.endsWith('-auth-token'))
+
+  if (!cookieName) return null
+
+  try {
+    const raw = cookieStore.get(cookieName)?.value
+    if (!raw) return null
+    const decoded = decodeURIComponent(raw)
+    const parsed = JSON.parse(decoded)
+    const accessToken = parsed?.access_token
+    if (!accessToken) return null
+
+    const payloadB64 = accessToken.split('.')[1]
+    if (!payloadB64) return null
+    const payload = JSON.parse(atob(payloadB64))
+    if (!payload?.exp || Date.now() / 1000 >= payload.exp) return null
+
+    return {
+      user: parsed.user ?? null,
+      access_token: accessToken,
+    }
+  } catch {
+    return null
+  }
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+  const cookieStore = await cookies()
+  const session = getSessionFromCookieStore(cookieStore)
 
   if (!session) redirect('/login')
 
