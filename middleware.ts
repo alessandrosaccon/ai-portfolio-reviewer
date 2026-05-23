@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/dashboard', '/analyze', '/history']
+const PROTECTED_PATHS = ['/dashboard', '/analyze', '/history', '/settings']
 const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password']
 
 export async function middleware(request: NextRequest) {
@@ -28,12 +28,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Use getSession() instead of getUser() for routing decisions.
-  // getSession() decodes the JWT from cookies locally — no network call,
-  // no risk of timeout on Vercel edge. getUser() makes a network request
-  // to Supabase on every middleware invocation which can fail/timeout.
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user ?? null
+  // getUser() is correct here — now that login uses a Server Action,
+  // cookies are written server-side before this middleware ever runs.
+  const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))

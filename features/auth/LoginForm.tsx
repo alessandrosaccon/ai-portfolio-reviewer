@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
+import { loginAction } from './actions'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -32,28 +32,15 @@ export function LoginForm() {
     setServerError(null)
     setIsPending(true)
 
-    try {
-      const supabase = createClient()
+    const result = await loginAction({
+      email: data.email,
+      password: data.password,
+      redirectTo: searchParams.get('redirectTo') || '/dashboard',
+    })
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      })
-
-      if (error) {
-        setServerError(error.message)
-        setIsPending(false)
-        return
-      }
-
-      // signInWithPassword succeeded — Supabase has set the session
-      // cookies in the browser. Navigate immediately; the middleware
-      // will read the session from the cookie and let the request through.
-      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-      window.location.href = redirectTo
-
-    } catch {
-      setServerError('An unexpected error occurred. Please try again.')
+    // loginAction either redirects (success) or returns { error }
+    if (result?.error) {
+      setServerError(result.error)
       setIsPending(false)
     }
   }
