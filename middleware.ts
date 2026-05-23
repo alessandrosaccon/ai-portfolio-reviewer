@@ -28,6 +28,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
+  // getSession() reads JWT from cookies locally — zero network calls.
+  // Never use getUser() here: it makes a network request on every request
+  // and causes timeouts that break the entire middleware chain.
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user ?? null
 
