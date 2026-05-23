@@ -6,9 +6,15 @@ import type { UserProfile } from '@/types/user'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
 
-  if (error || !user) redirect('/login')
+  // Use getSession() to read from cookies without a network call.
+  // getUser() was making a network request that timed out server-side
+  // causing a redirect loop with the middleware.
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) redirect('/login')
+
+  const user = session.user
 
   const profile: UserProfile = {
     id: user.id,

@@ -28,8 +28,6 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // getSession() decodes JWT locally from cookies — no network call.
-  // This avoids timeouts that were blocking the entire middleware chain.
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user ?? null
 
@@ -38,17 +36,17 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p))
 
   if (isProtected && !user) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/login'
-    redirectUrl.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(redirectUrl)
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    url.searchParams.set('redirectTo', pathname)
+    return NextResponse.redirect(url)
   }
 
   if (isAuthPage && user) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    redirectUrl.search = ''
-    return NextResponse.redirect(redirectUrl)
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    url.search = ''
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse

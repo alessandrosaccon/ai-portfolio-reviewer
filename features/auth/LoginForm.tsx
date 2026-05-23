@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -24,51 +24,39 @@ export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null)
   const [isPending, setIsPending] = useState(false)
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-  const supabase = useRef(createClient())
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
     resolver: zodResolver(schema),
   })
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.current.auth.onAuthStateChange((event, session) => {
-      setDebugInfo((prev) => ({
-        ...prev,
-        authEvent: event,
-        hasSession: !!session,
-        userId: session?.user?.id,
-      }))
-      if (event === 'SIGNED_IN' && session) {
-        window.location.href = redirectTo
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [redirectTo])
 
   async function onSubmit(data: LoginFields) {
     setServerError(null)
     setDebugInfo({ step: 'calling signInWithPassword...' })
     setIsPending(true)
 
-    const { data: authData, error } = await supabase.current.auth.signInWithPassword({
+    const supabase = createClient()
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     })
 
     if (error) {
-      setDebugInfo({ step: 'signInWithPassword error', error: error.message, code: error.status })
+      setDebugInfo({ step: 'error', message: error.message, status: error.status })
       setServerError(error.message)
       setIsPending(false)
       return
     }
 
     setDebugInfo({
-      step: 'signInWithPassword OK — waiting for SIGNED_IN event',
+      step: 'success',
       userId: authData.user?.id,
       hasSession: !!authData.session,
+      navigatingTo: searchParams.get('redirectTo') || '/dashboard',
     })
-    // Navigation happens in onAuthStateChange when SIGNED_IN fires
+
+    // createBrowserClient (@supabase/ssr) writes the session to cookies
+    // automatically. Full page reload ensures the server reads them.
+    window.location.href = searchParams.get('redirectTo') || '/dashboard'
   }
 
   return (
