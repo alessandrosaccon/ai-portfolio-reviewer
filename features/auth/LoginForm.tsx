@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +20,7 @@ const schema = z.object({
 type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -36,16 +37,18 @@ export function LoginForm() {
     const formData = new FormData()
     formData.set('email', data.email)
     formData.set('password', data.password)
-    formData.set('redirectTo', redirectTo)
 
     const result = await loginAction(formData)
 
-    // If loginAction redirects successfully, this code never runs.
-    // We only land here if there was an error.
     if (result?.error) {
       setServerError(result.error)
       setIsPending(false)
+      return
     }
+
+    // Cookies are written server-side by the action.
+    // router.push triggers a full navigation with the new cookies.
+    router.push(redirectTo)
   }
 
   return (
