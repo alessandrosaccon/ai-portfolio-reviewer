@@ -1,32 +1,23 @@
 'use server'
 
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function loginAction(formData: {
-  email: string
-  password: string
-  redirectTo?: string
-}) {
+export async function loginAction(formData: FormData) {
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
+  const redirectTo = (formData.get('redirectTo') as string) || '/dashboard'
+
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: formData.email,
-    password: formData.password,
-  })
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
-    return { success: false as const, error: error.message }
+    // Return serializable error — Server Actions cannot throw to the client directly
+    return { error: error.message }
   }
 
-  if (!data.session) {
-    return { success: false as const, error: 'Login succeeded but no session was created. Please try again.' }
-  }
-
-  // Return success — cookies are written server-side by createClient.
-  // The client will navigate with window.location.href so the browser
-  // sends the new sb-* cookies on the next request to /dashboard.
-  return {
-    success: true as const,
-    redirectTo: formData.redirectTo || '/dashboard',
-  }
+  // Cookies are now written server-side. redirect() throws internally (Next.js)
+  // so it must be called outside try/catch.
+  redirect(redirectTo)
 }
