@@ -33,28 +33,41 @@ export function LoginForm() {
     setIsPending(true)
     try {
       const supabase = createClient()
+
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       })
+
       if (error) {
         setServerError(error.message)
         setIsPending(false)
         return
       }
-      // Confirm the session cookie is actually set before navigating.
-      // getSession() reads from the cookie store — if it returns a session,
-      // Supabase has successfully written the sb-* cookies and the middleware
-      // will see an authenticated user on the next request.
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        setServerError('Session could not be established. Please try again.')
-        setIsPending(false)
-        return
-      }
+
+      // After signInWithPassword the browser has the sb-* cookies.
+      // We call our own server route to confirm the session is readable
+      // server-side (i.e. the middleware will see it on the next request).
+      // If the server confirms authentication, we do a hard navigation so
+      // the full page reload picks up the new session from the server.
       const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-      // Use replace() so the login page is removed from history
-      window.location.replace(redirectTo)
+      const res = await fetch(`/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`)
+
+      if (res.ok) {
+        // Session confirmed server-side — safe to navigate
+        window.location.href = redirectTo
+      } else {
+        // Cookie not yet readable server-side (rare edge case on cold start)
+        // Wait 500ms and try one more time before showing error
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const retry = await fetch(`/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`)
+        if (retry.ok) {
+          window.location.href = redirectTo
+        } else {
+          setServerError('Login succeeded but session could not be confirmed. Please try again.')
+          setIsPending(false)
+        }
+      }
     } catch {
       setServerError('An unexpected error occurred. Please try again.')
       setIsPending(false)
