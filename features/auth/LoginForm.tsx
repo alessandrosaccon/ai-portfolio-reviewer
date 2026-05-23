@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { loginAction } from './actions'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -33,21 +32,21 @@ export function LoginForm() {
     setServerError(null)
     setIsPending(true)
 
-    const formData = new FormData()
-    formData.set('email', data.email)
-    formData.set('password', data.password)
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: data.email, password: data.password }),
+    })
 
-    const result = await loginAction(formData)
-
-    if (result?.error) {
-      setServerError(result.error)
+    if (!res.ok) {
+      const body = await res.json()
+      setServerError(body.error ?? 'Login failed')
       setIsPending(false)
       return
     }
 
-    // Full page navigation — forces browser to send the sb- cookies
-    // that were written server-side by the action in the HTTP request.
-    // router.push() does a soft navigation and does NOT include new cookies.
+    // API Route sets HttpOnly cookie via Set-Cookie header in the response.
+    // Full page navigation ensures the browser sends it in the next request.
     window.location.href = redirectTo
   }
 
