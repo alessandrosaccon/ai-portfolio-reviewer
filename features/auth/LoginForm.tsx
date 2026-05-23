@@ -31,8 +31,10 @@ export function LoginForm() {
   async function onSubmit(data: LoginFields) {
     setServerError(null)
     setIsPending(true)
+
     try {
       const supabase = createClient()
+      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
 
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -45,30 +47,22 @@ export function LoginForm() {
         return
       }
 
-      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-
-      // credentials:'include' is required so the browser sends the sb-* cookies
-      // that Supabase just set. Without it the server route sees no session.
-      const res = await fetch(
-        `/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`,
-        { credentials: 'include' }
-      )
-
-      if (res.ok) {
-        window.location.href = redirectTo
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 600))
-        const retry = await fetch(
-          `/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`,
-          { credentials: 'include' }
-        )
-        if (retry.ok) {
+      // onAuthStateChange fires SIGNED_IN only after Supabase has fully
+      // written the session cookies in the browser. Navigating here
+      // guarantees the middleware will see an authenticated request.
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') {
+          subscription.unsubscribe()
           window.location.href = redirectTo
-        } else {
-          setServerError('Login succeeded but session could not be confirmed. Please try again.')
-          setIsPending(false)
         }
-      }
+      })
+
+      // Safety fallback: if SIGNED_IN never fires within 3s, navigate anyway
+      setTimeout(() => {
+        subscription.unsubscribe()
+        window.location.href = redirectTo
+      }, 3000)
+
     } catch {
       setServerError('An unexpected error occurred. Please try again.')
       setIsPending(false)
