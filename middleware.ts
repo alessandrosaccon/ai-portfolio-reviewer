@@ -28,9 +28,10 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // getUser() is correct here — now that login uses a Server Action,
-  // cookies are written server-side before this middleware ever runs.
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() decodes JWT locally from cookies — no network call.
+  // This avoids timeouts that were blocking the entire middleware chain.
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
 
   const { pathname } = request.nextUrl
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))

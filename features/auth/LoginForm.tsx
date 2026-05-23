@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -23,43 +24,51 @@ export function LoginForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null)
   const [isPending, setIsPending] = useState(false)
+  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  const supabase = useRef(createClient())
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
     resolver: zodResolver(schema),
   })
 
+  useEffect(() => {
+    const { data: { subscription } } = supabase.current.auth.onAuthStateChange((event, session) => {
+      setDebugInfo((prev) => ({
+        ...prev,
+        authEvent: event,
+        hasSession: !!session,
+        userId: session?.user?.id,
+      }))
+      if (event === 'SIGNED_IN' && session) {
+        window.location.href = redirectTo
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [redirectTo])
+
   async function onSubmit(data: LoginFields) {
     setServerError(null)
-    setDebugInfo(null)
+    setDebugInfo({ step: 'calling signInWithPassword...' })
     setIsPending(true)
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: data.email, password: data.password }),
-      })
+    const { data: authData, error } = await supabase.current.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    })
 
-      const json = await res.json()
-      setDebugInfo({ status: res.status, ...json })
-
-      if (!res.ok || !json.success) {
-        setServerError(json.error ?? 'Login failed')
-        setIsPending(false)
-        return
-      }
-
-      // Login confirmed server-side, navigate
-      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-      window.location.href = redirectTo
-
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err)
-      setDebugInfo({ fetchError: message })
-      setServerError('Network error. See debug panel.')
+    if (error) {
+      setDebugInfo({ step: 'signInWithPassword error', error: error.message, code: error.status })
+      setServerError(error.message)
       setIsPending(false)
+      return
     }
+
+    setDebugInfo({
+      step: 'signInWithPassword OK — waiting for SIGNED_IN event',
+      userId: authData.user?.id,
+      hasSession: !!authData.session,
+    })
+    // Navigation happens in onAuthStateChange when SIGNED_IN fires
   }
 
   return (
