@@ -1,8 +1,7 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState } from 'react'
 import { LogOut, Settings, User } from 'lucide-react'
-import { logout } from './actions'
 import type { UserProfile } from '@/types/user'
 
 interface UserMenuProps {
@@ -10,10 +9,12 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  function handleLogout() {
-    startTransition(() => logout())
+  async function handleLogout() {
+    setIsPending(true)
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
   }
 
   const initials = user.fullName
@@ -22,7 +23,6 @@ export function UserMenu({ user }: UserMenuProps) {
 
   return (
     <div className="flex flex-col gap-1 border-t border-border pt-3">
-      {/* User info */}
       <div className="flex items-center gap-2.5 rounded-md px-2 py-2">
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
           {initials}
@@ -35,7 +35,6 @@ export function UserMenu({ user }: UserMenuProps) {
         </div>
       </div>
 
-      {/* Actions */}
       <a
         href="/settings"
         className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"

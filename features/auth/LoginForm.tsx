@@ -39,14 +39,13 @@ export function LoginForm() {
     })
 
     if (!res.ok) {
-      const body = await res.json()
-      setServerError(body.error ?? 'Login failed')
+      const body = await res.json().catch(() => ({}))
+      setServerError(body.error ?? 'Login failed. Please try again.')
       setIsPending(false)
       return
     }
 
-    // API Route sets HttpOnly cookie via Set-Cookie header in the response.
-    // Full page navigation ensures the browser sends it in the next request.
+    // Full navigation so the browser sends the new HttpOnly cookie
     window.location.href = redirectTo
   }
 
