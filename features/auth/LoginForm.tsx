@@ -41,40 +41,23 @@ export function LoginForm() {
         redirectTo: searchParams.get('redirectTo') || '/dashboard',
       })
 
-      // If we receive a result, redirect() was NOT called or was blocked
-      setDebugInfo({
-        clientNote: 'Server action returned a value — redirect() was NOT called or was caught',
-        result,
-      })
+      setDebugInfo({ result })
 
-      if (result?.error) {
+      if (!result.success) {
         setServerError(result.error)
+        setIsPending(false)
+        return
       }
-      setIsPending(false)
+
+      // Server confirmed session written — navigate with full page reload
+      // so middleware receives the sb-* cookies on the very first request.
+      window.location.href = result.redirectTo
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      const isNextRedirect = message.includes('NEXT_REDIRECT')
-
-      if (isNextRedirect) {
-        // redirect() fired correctly but navigation did not happen.
-        // This means the middleware is redirecting back to /login.
-        setDebugInfo({
-          clientNote: 'NEXT_REDIRECT was thrown and caught on the client. redirect() fired but browser did not navigate. Middleware may be redirecting back to /login.',
-          rawError: message,
-        })
-        // Try navigating manually as fallback
-        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-        setDebugInfo((prev) => ({ ...prev, attemptingManualNav: redirectTo }))
-        window.location.href = redirectTo
-      } else {
-        setDebugInfo({
-          clientNote: 'Unexpected error thrown by server action',
-          rawError: message,
-        })
-        setServerError('Unexpected error. See debug panel.')
-        setIsPending(false)
-      }
+      setDebugInfo({ clientError: message })
+      setServerError('Unexpected error. See debug panel.')
+      setIsPending(false)
     }
   }
 
