@@ -22,6 +22,7 @@ type LoginFields = z.infer<typeof schema>
 export function LoginForm() {
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null)
   const [isPending, setIsPending] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
@@ -30,17 +31,50 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFields) {
     setServerError(null)
+    setDebugInfo(null)
     setIsPending(true)
 
-    const result = await loginAction({
-      email: data.email,
-      password: data.password,
-      redirectTo: searchParams.get('redirectTo') || '/dashboard',
-    })
+    try {
+      const result = await loginAction({
+        email: data.email,
+        password: data.password,
+        redirectTo: searchParams.get('redirectTo') || '/dashboard',
+      })
 
-    if (result?.error) {
-      setServerError(result.error)
+      // If we receive a result, redirect() was NOT called or was blocked
+      setDebugInfo({
+        clientNote: 'Server action returned a value — redirect() was NOT called or was caught',
+        result,
+      })
+
+      if (result?.error) {
+        setServerError(result.error)
+      }
       setIsPending(false)
+
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      const isNextRedirect = message.includes('NEXT_REDIRECT')
+
+      if (isNextRedirect) {
+        // redirect() fired correctly but navigation did not happen.
+        // This means the middleware is redirecting back to /login.
+        setDebugInfo({
+          clientNote: 'NEXT_REDIRECT was thrown and caught on the client. redirect() fired but browser did not navigate. Middleware may be redirecting back to /login.',
+          rawError: message,
+        })
+        // Try navigating manually as fallback
+        const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+        setDebugInfo((prev) => ({ ...prev, attemptingManualNav: redirectTo }))
+        window.location.href = redirectTo
+      } else {
+        setDebugInfo({
+          clientNote: 'Unexpected error thrown by server action',
+          rawError: message,
+        })
+        setServerError('Unexpected error. See debug panel.')
+        setIsPending(false)
+      }
     }
   }
 
@@ -82,14 +116,22 @@ export function LoginForm() {
           <p className="text-xs text-destructive">{errors.password.message}</p>
         )}
       </div>
+
       {serverError && (
-        <div
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-        >
+        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {serverError}
         </div>
       )}
+
+      {debugInfo && (
+        <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3">
+          <p className="mb-1.5 text-xs font-semibold text-yellow-400">DEBUG</p>
+          <pre className="overflow-x-auto whitespace-pre-wrap break-all text-xs text-yellow-300">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+      )}
+
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
