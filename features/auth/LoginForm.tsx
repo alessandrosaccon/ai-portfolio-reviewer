@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,7 +20,6 @@ const schema = z.object({
 type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -46,9 +45,10 @@ export function LoginForm() {
       return
     }
 
-    // Cookies are written server-side by the action.
-    // router.push triggers a full navigation with the new cookies.
-    router.push(redirectTo)
+    // Full page navigation — forces browser to send the sb- cookies
+    // that were written server-side by the action in the HTTP request.
+    // router.push() does a soft navigation and does NOT include new cookies.
+    window.location.href = redirectTo
   }
 
   return (
