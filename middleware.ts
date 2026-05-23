@@ -26,9 +26,6 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: do not add any logic between createServerClient and getUser()
-  // A simple mistake could make it very hard to debug issues with users being
-  // randomly logged out.
   const { data: { user } } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
@@ -49,13 +46,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // IMPORTANT: return supabaseResponse (not NextResponse.next()) so that
-  // the refreshed session cookies are forwarded to the browser.
   return supabaseResponse
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude static files, images, and all /api/auth/* routes from middleware
+    // so that session check and auth callbacks are never blocked.
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|api/auth|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

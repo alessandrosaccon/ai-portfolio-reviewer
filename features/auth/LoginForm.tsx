@@ -45,22 +45,23 @@ export function LoginForm() {
         return
       }
 
-      // After signInWithPassword the browser has the sb-* cookies.
-      // We call our own server route to confirm the session is readable
-      // server-side (i.e. the middleware will see it on the next request).
-      // If the server confirms authentication, we do a hard navigation so
-      // the full page reload picks up the new session from the server.
       const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-      const res = await fetch(`/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`)
+
+      // credentials:'include' is required so the browser sends the sb-* cookies
+      // that Supabase just set. Without it the server route sees no session.
+      const res = await fetch(
+        `/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`,
+        { credentials: 'include' }
+      )
 
       if (res.ok) {
-        // Session confirmed server-side — safe to navigate
         window.location.href = redirectTo
       } else {
-        // Cookie not yet readable server-side (rare edge case on cold start)
-        // Wait 500ms and try one more time before showing error
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        const retry = await fetch(`/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`)
+        await new Promise((resolve) => setTimeout(resolve, 600))
+        const retry = await fetch(
+          `/api/auth/session?redirectTo=${encodeURIComponent(redirectTo)}`,
+          { credentials: 'include' }
+        )
         if (retry.ok) {
           window.location.href = redirectTo
         } else {
