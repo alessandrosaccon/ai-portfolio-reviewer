@@ -1,16 +1,12 @@
-import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { updateSession } from '@/lib/supabase/middleware'
+import { NextResponse, type NextRequest } from 'next/server'
 
 const PROTECTED_PATHS = ['/dashboard', '/analyze', '/history']
 const AUTH_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password']
 
 export async function middleware(request: NextRequest) {
-  // Step 1: refresh session cookie (must happen first)
-  const response = await updateSession(request)
-  const { pathname } = request.nextUrl
+  let supabaseResponse = NextResponse.next({ request })
 
-  // Step 2: read the refreshed session to make access control decisions
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -19,19 +15,26 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll() {
-          // Read-only in this context -- session was already written by updateSession
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
         },
       },
     }
   )
 
+  // IMPORTANT: do not add any logic between createServerClient and getUser()
+  // A simple mistake could make it very hard to debug issues with users being
+  // randomly logged out.
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { pathname } = request.nextUrl
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p))
   const isAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p))
 
-  // Unauthenticated user trying to access a protected route
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
@@ -39,7 +42,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Authenticated user trying to access an auth page (login/signup)
   if (isAuthPage && user) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/dashboard'
@@ -47,7 +49,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  return response
+  // IMPORTANT: return supabaseResponse (not NextResponse.next()) so that
+  // the refreshed session cookies are forwarded to the browser.
+  return supabaseResponse
 }
 
 export const config = {
