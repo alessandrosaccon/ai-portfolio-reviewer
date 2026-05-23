@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { NextResponse, type NextRequest } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
@@ -10,35 +9,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
     }
 
-    const cookieStore = await cookies()
-
-    const response = NextResponse.json({ ok: true })
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options)
-            })
-          },
-        },
-      }
-    )
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 })
+      return NextResponse.json(
+        { error: error.message, debug: { code: error.status, name: error.name } },
+        { status: 401 }
+      )
     }
 
-    return response
-  } catch {
-    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })
+    if (!data.session) {
+      return NextResponse.json(
+        { error: 'No session returned after login' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      debug: {
+        userId: data.user.id,
+        email: data.user.email,
+        sessionExpires: data.session.expires_at,
+      }
+    })
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Internal server error', debug: { message: String(err) } },
+      { status: 500 }
+    )
   }
 }

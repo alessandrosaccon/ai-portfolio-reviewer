@@ -10,7 +10,6 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { loginAction } from './actions'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -35,28 +34,30 @@ export function LoginForm() {
     setIsPending(true)
 
     try {
-      const result = await loginAction({
-        email: data.email,
-        password: data.password,
-        redirectTo: searchParams.get('redirectTo') || '/dashboard',
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: data.email, password: data.password }),
       })
 
-      setDebugInfo({ result })
+      const json = await res.json()
+      setDebugInfo({ status: res.status, ...json })
 
-      if (!result.success) {
-        setServerError(result.error)
+      if (!res.ok || !json.success) {
+        setServerError(json.error ?? 'Login failed')
         setIsPending(false)
         return
       }
 
-      // Server confirmed session written — navigate with full page reload
-      // so middleware receives the sb-* cookies on the very first request.
-      window.location.href = result.redirectTo
+      // Login confirmed server-side, navigate
+      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+      window.location.href = redirectTo
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      setDebugInfo({ clientError: message })
-      setServerError('Unexpected error. See debug panel.')
+      setDebugInfo({ fetchError: message })
+      setServerError('Network error. See debug panel.')
       setIsPending(false)
     }
   }
