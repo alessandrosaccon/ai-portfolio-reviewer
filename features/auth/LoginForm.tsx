@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,7 +20,6 @@ const schema = z.object({
 type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
@@ -43,13 +42,19 @@ export function LoginForm() {
         setIsPending(false)
         return
       }
-      // router.refresh() forces Next.js to re-sync server state and propagate
-      // the new Supabase session cookie before navigating.
-      // This prevents the middleware from seeing an unauthenticated
-      // request and redirecting back to /login.
-      router.refresh()
+      // Confirm the session cookie is actually set before navigating.
+      // getSession() reads from the cookie store — if it returns a session,
+      // Supabase has successfully written the sb-* cookies and the middleware
+      // will see an authenticated user on the next request.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setServerError('Session could not be established. Please try again.')
+        setIsPending(false)
+        return
+      }
       const redirectTo = searchParams.get('redirectTo') || '/dashboard'
-      router.push(redirectTo)
+      // Use replace() so the login page is removed from history
+      window.location.replace(redirectTo)
     } catch {
       setServerError('An unexpected error occurred. Please try again.')
       setIsPending(false)
@@ -60,26 +65,63 @@ export function LoginForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" type="email" placeholder="you@example.com" autoComplete="email" aria-invalid={!!errors.email} {...register('email')} />
-        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+        <Input
+          id="email"
+          type="email"
+          placeholder="you@example.com"
+          autoComplete="email"
+          aria-invalid={!!errors.email}
+          {...register('email')}
+        />
+        {errors.email && (
+          <p className="text-xs text-destructive">{errors.email.message}</p>
+        )}
       </div>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">Forgot password?</Link>
+          <Link
+            href="/forgot-password"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
         </div>
-        <Input id="password" type="password" placeholder="••••••••" autoComplete="current-password" aria-invalid={!!errors.password} {...register('password')} />
-        {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+        <Input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          autoComplete="current-password"
+          aria-invalid={!!errors.password}
+          {...register('password')}
+        />
+        {errors.password && (
+          <p className="text-xs text-destructive">{errors.password.message}</p>
+        )}
       </div>
       {serverError && (
-        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">{serverError}</div>
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+        >
+          {serverError}
+        </div>
       )}
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</> : 'Sign in'}
+        {isPending ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
+        ) : (
+          'Sign in'
+        )}
       </Button>
       <p className="text-center text-xs text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">Sign up</Link>
+        <Link
+          href="/signup"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
+          Sign up
+        </Link>
       </p>
     </form>
   )
