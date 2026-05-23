@@ -34,7 +34,6 @@ export function LoginForm() {
 
     try {
       const supabase = createClient()
-      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
 
       const { error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -47,21 +46,11 @@ export function LoginForm() {
         return
       }
 
-      // onAuthStateChange fires SIGNED_IN only after Supabase has fully
-      // written the session cookies in the browser. Navigating here
-      // guarantees the middleware will see an authenticated request.
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        if (event === 'SIGNED_IN') {
-          subscription.unsubscribe()
-          window.location.href = redirectTo
-        }
-      })
-
-      // Safety fallback: if SIGNED_IN never fires within 3s, navigate anyway
-      setTimeout(() => {
-        subscription.unsubscribe()
-        window.location.href = redirectTo
-      }, 3000)
+      // signInWithPassword succeeded — Supabase has set the session
+      // cookies in the browser. Navigate immediately; the middleware
+      // will read the session from the cookie and let the request through.
+      const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+      window.location.href = redirectTo
 
     } catch {
       setServerError('An unexpected error occurred. Please try again.')
