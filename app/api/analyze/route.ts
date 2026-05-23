@@ -1,1 +1,131 @@
-aW1wb3J0IHsgTmV4dFJlc3BvbnNlIH0gZnJvbSAnbmV4dC9zZXJ2ZXInCmltcG9ydCB7IGNyZWF0ZUNsaWVudCB9IGZyb20gJ0AvbGliL3N1cGFiYXNlL3NlcnZlcicKaW1wb3J0IHsgb3BlbmFpLCBPUEVOQUlfTU9ERUwgfSBmcm9tICdAL2xpYi9vcGVuYWknCmltcG9ydCB7IGV4dHJhY3RUZXh0RnJvbVBERiwgdHJ1bmNhdGVDVlRleHQgfSBmcm9tICdAL2xpYi9wZGYtcGFyc2VyJwppbXBvcnQgeyBidWlsZEFuYWx5c2lzUHJvbXB0IH0gZnJvbSAnQC9zZXJ2ZXIvcHJvbXB0cy9hbmFseXNpcycKaW1wb3J0IHsgY29tcHV0ZU92ZXJhbGxTY29yZSB9IGZyb20gJ0Avc2VydmVyL3Njb3JpbmcnCmltcG9ydCB0eXBlIHsgQW5hbHlzaXNSZXN1bHQgfSBmcm9tICdAL3R5cGVzL2FuYWx5c2lzJwoKZXhwb3J0IGNvbnN0IHJ1bnRpbWUgPSAnbm9kZWpzJwpleHBvcnQgY29uc3QgbWF4RHVyYXRpb24gPSA2MAoKZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIFBPU1QocmVxdWVzdDogUmVxdWVzdCkgewogIHRyeSB7CiAgICBjb25zdCBzdXBhYmFzZSA9IGF3YWl0IGNyZWF0ZUNsaWVudCgpCgogICAgLy8gZ2V0VXNlcigpIHZhbGlkYXRlcyB0aGUgSldUIHdpdGggU3VwYWJhc2UgQXV0aCBzZXJ2ZXJzIC0gc2FmZSBmb3IgUm91dGUgSGFuZGxlcnMKICAgIGNvbnN0IHsgZGF0YTogeyB1c2VyIH0sIGVycm9yOiBhdXRoRXJyb3IgfSA9IGF3YWl0IHN1cGFiYXNlLmF1dGguZ2V0VXNlcigpCgogICAgaWYgKCF1c2VyIHx8IGF1dGhFcnJvcikgewogICAgICByZXR1cm4gTmV4dFJlc3BvbnNlLmpzb24oeyBlcnJvcjogJ1VuYXV0aG9yaXplZCcgfSwgeyBzdGF0dXM6IDQwMSB9KQogICAgfQoKICAgIGNvbnN0IGZvcm1EYXRhID0gYXdhaXQgcmVxdWVzdC5mb3JtRGF0YSgpCiAgICBjb25zdCBjdkZpbGUgPSBmb3JtRGF0YS5nZXQoJ2N2JykgYXMgRmlsZSB8IG51bGwKICAgIGNvbnN0IGpvYkRlc2NyaXB0aW9uID0gZm9ybURhdGEuZ2V0KCdqb2JEZXNjcmlwdGlvbicpIGFzIHN0cmluZyB8IG51bGwKICAgIGNvbnN0IGpvYlRpdGxlID0gZm9ybURhdGEuZ2V0KCdqb2JUaXRsZScpIGFzIHN0cmluZyB8IG51bGwKICAgIGNvbnN0IGNvbXBhbnkgPSBmb3JtRGF0YS5nZXQoJ2NvbXBhbnknKSBhcyBzdHJpbmcgfCBudWxsCgogICAgaWYgKCFjdkZpbGUgfHwgIWpvYkRlc2NyaXB0aW9uKSB7CiAgICAgIHJldHVybiBOZXh0UmVzcG9uc2UuanNvbih7IGVycm9yOiAnTWlzc2luZyByZXF1aXJlZCBmaWVsZHM6IGN2IGFuZCBqb2JEZXNjcmlwdGlvbicgfSwgeyBzdGF0dXM6IDQwMCB9KQogICAgfQogICAgaWYgKGN2RmlsZS50eXBlICE9PSAnYXBwbGljYXRpb24vcGRmJykgewogICAgICByZXR1cm4gTmV4dFJlc3BvbnNlLmpzb24oeyBlcnJvcjogJ09ubHkgUERGIGZpbGVzIGFyZSBzdXBwb3J0ZWQnIH0sIHsgc3RhdHVzOiA0MDAgfSkKICAgIH0KICAgIGlmIChjdkZpbGUuc2l6ZSA+IDUgKiAxMDI0ICogMTAyNCkgewogICAgICByZXR1cm4gTmV4dFJlc3BvbnNlLmpzb24oeyBlcnJvcjogJ0ZpbGUgc2l6ZSBtdXN0IGJlIHVuZGVyIDVNQicgfSwgeyBzdGF0dXM6IDQwMCB9KQogICAgfQoKICAgIGNvbnN0IGFycmF5QnVmZmVyID0gYXdhaXQgY3ZGaWxlLmFycmF5QnVmZmVyKCkKICAgIGNvbnN0IGJ1ZmZlciA9IEJ1ZmZlci5mcm9tKGFycmF5QnVmZmVyKQogICAgbGV0IGN2VGV4dDogc3RyaW5nCiAgICB0cnkgewogICAgICBjdlRleHQgPSBhd2FpdCBleHRyYWN0VGV4dEZyb21QREYoYnVmZmVyKQogICAgfSBjYXRjaCAocGFyc2VFcnJvcikgewogICAgICByZXR1cm4gTmV4dFJlc3BvbnNlLmpzb24oCiAgICAgICAgeyBlcnJvcjogcGFyc2VFcnJvciBpbnN0YW5jZW9mIEVycm9yID8gcGFyc2VFcnJvci5tZXNzYWdlIDogJ0ZhaWxlZCB0byBwYXJzZSBQREYnIH0sCiAgICAgICAgeyBzdGF0dXM6IDQyMiB9CiAgICAgICkKICAgIH0KCiAgICBjdlRleHQgPSB0cnVuY2F0ZUNWVGV4dChjdlRleHQpCgogICAgY29uc3QgeyBkYXRhOiBhbmFseXNpcywgZXJyb3I6IGluc2VydEVycm9yIH0gPSBhd2FpdCBzdXBhYmFzZQogICAgICAuZnJvbSgnYW5hbHlzZXMnKQogICAgICAuaW5zZXJ0KHsKICAgICAgICB1c2VyX2lkOiB1c2VyLmlkLAogICAgICAgIHN0YXR1czogJ3Byb2Nlc3NpbmcnLAogICAgICAgIGN2X3RleHQ6IGN2VGV4dCwKICAgICAgICBqb2JfZGVzY3JpcHRpb246IGpvYkRlc2NyaXB0aW9uLnNsaWNlKDAsIDEwMDAwKSwKICAgICAgICBqb2JfdGl0bGU6IGpvYlRpdGxlPy50cmltKCkgfHwgbnVsbCwKICAgICAgICBjb21wYW55OiBjb21wYW55Py50cmltKCkgfHwgbnVsbCwKICAgICAgfSkKICAgICAgLnNlbGVjdCgnaWQnKQogICAgICAuc2luZ2xlKCkKCiAgICBpZiAoaW5zZXJ0RXJyb3IgfHwgIWFuYWx5c2lzKSB7CiAgICAgIGNvbnNvbGUuZXJyb3IoJ1tBbmFseXplXSBEQiBpbnNlcnQgZXJyb3I6JywgaW5zZXJ0RXJyb3IpCiAgICAgIHJldHVybiBOZXh0UmVzcG9uc2UuanNvbih7IGVycm9yOiAnRmFpbGVkIHRvIGNyZWF0ZSBhbmFseXNpcyByZWNvcmQnIH0sIHsgc3RhdHVzOiA1MDAgfSkKICAgIH0KCiAgICBjb25zdCBwcm9tcHQgPSBidWlsZEFuYWx5c2lzUHJvbXB0KHsKICAgICAgY3ZUZXh0LAogICAgICBqb2JEZXNjcmlwdGlvbjogam9iRGVzY3JpcHRpb24uc2xpY2UoMCwgMTAwMDApLAogICAgICBqb2JUaXRsZTogam9iVGl0bGUgPz8gdW5kZWZpbmVkLAogICAgICBjb21wYW55OiBjb21wYW55ID8/IHVuZGVmaW5lZCwKICAgIH0pCgogICAgbGV0IHJhd1Jlc3VsdDogQW5hbHlzaXNSZXN1bHRbJ3Njb3JlJ10gJiB7CiAgICAgIHN1bW1hcnk6IHN0cmluZwogICAgICBtYXRjaGVkS2V5d29yZHM6IHN0cmluZ1tdCiAgICAgIG1pc3NpbmdLZXl3b3Jkczogc3RyaW5nW10KICAgICAgc2tpbGxHYXA6IEFuYWx5c2lzUmVzdWx0Wydza2lsbEdhcCddCiAgICAgIHN1Z2dlc3Rpb25zOiBBbmFseXNpc1Jlc3VsdFsnc3VnZ2VzdGlvbnMnXQogICAgfQoKICAgIHRyeSB7CiAgICAgIGNvbnN0IGNvbXBsZXRpb24gPSBhd2FpdCBvcGVuYWkuY2hhdC5jb21wbGV0aW9ucy5jcmVhdGUoewogICAgICAgIG1vZGVsOiBPUEVOQUlfTU9ERUwsCiAgICAgICAgbWVzc2FnZXM6IFt7IHJvbGU6ICd1c2VyJywgY29udGVudDogcHJvbXB0IH1dLAogICAgICAgIHRlbXBlcmF0dXJlOiAwLjMsCiAgICAgICAgcmVzcG9uc2VfZm9ybWF0OiB7IHR5cGU6ICdqc29uX29iamVjdCcgfSwKICAgICAgfSkKICAgICAgY29uc3QgY29udGVudCA9IGNvbXBsZXRpb24uY2hvaWNlc1swXT8ubWVzc2FnZT8uY29udGVudAogICAgICBpZiAoIWNvbnRlbnQpIHRocm93IG5ldyBFcnJvcignRW1wdHkgcmVzcG9uc2UgZnJvbSBPcGVuQUknKQogICAgICByYXdSZXN1bHQgPSBKU09OLnBhcnNlKGNvbnRlbnQpCiAgICB9IGNhdGNoIChhaUVycm9yKSB7CiAgICAgIGNvbnNvbGUuZXJyb3IoJ1tBbmFseXplXSBPcGVuQUkgZXJyb3I6JywgYWlFcnJvcikKICAgICAgYXdhaXQgc3VwYWJhc2UuZnJvbSgnYW5hbHlzZXMnKS51cGRhdGUoeyBzdGF0dXM6ICdmYWlsZWQnIH0pLmVxKCdpZCcsIGFuYWx5c2lzLmlkKQogICAgICByZXR1cm4gTmV4dFJlc3BvbnNlLmpzb24oeyBlcnJvcjogJ0FJIGFuYWx5c2lzIGZhaWxlZC4gUGxlYXNlIHRyeSBhZ2Fpbi4nIH0sIHsgc3RhdHVzOiA1MDAgfSkKICAgIH0KCiAgICBjb25zdCBvdmVyYWxsID0gY29tcHV0ZU92ZXJhbGxTY29yZSh7CiAgICAgIHNraWxsczogcmF3UmVzdWx0LnNjb3JlPy5za2lsbHMgPz8gcmF3UmVzdWx0LnNraWxscyA/PyA1MCwKICAgICAga2V5d29yZHM6IHJhd1Jlc3VsdC5zY29yZT8ua2V5d29yZHMgPz8gcmF3UmVzdWx0LmtleXdvcmRzID8/IDUwLAogICAgICBleHBlcmllbmNlOiByYXdSZXN1bHQuc2NvcmU/LmV4cGVyaWVuY2UgPz8gcmF3UmVzdWx0LmV4cGVyaWVuY2UgPz8gNTAsCiAgICAgIHByZXNlbnRhdGlvbjogcmF3UmVzdWx0LnNjb3JlPy5wcmVzZW50YXRpb24gPz8gcmF3UmVzdWx0LnByZXNlbnRhdGlvbiA/PyA1MCwKICAgIH0pCgogICAgY29uc3QgZmluYWxSZXN1bHQgPSB7CiAgICAgIHNjb3JlOiB7CiAgICAgICAgb3ZlcmFsbCwKICAgICAgICBza2lsbHM6IHJhd1Jlc3VsdC5zY29yZT8uc2tpbGxzID8/IHJhd1Jlc3VsdC5za2lsbHMgPz8gNTAsCiAgICAgICAga2V5d29yZHM6IHJhd1Jlc3VsdC5zY29yZT8ua2V5d29yZHMgPz8gcmF3UmVzdWx0LmtleXdvcmRzID8/IDUwLAogICAgICAgIGV4cGVyaWVuY2U6IHJhd1Jlc3VsdC5zY29yZT8uZXhwZXJpZW5jZSA/PyByYXdSZXN1bHQuZXhwZXJpZW5jZSA/PyA1MCwKICAgICAgICBwcmVzZW50YXRpb246IHJhd1Jlc3VsdC5zY29yZT8ucHJlc2VudGF0aW9uID8/IHJhd1Jlc3VsdC5wcmVzZW50YXRpb24gPz8gNTAsCiAgICAgIH0sCiAgICAgIHN1bW1hcnk6IHJhd1Jlc3VsdC5zdW1tYXJ5ID8/ICcnLAogICAgICBtYXRjaGVkS2V5d29yZHM6IHJhd1Jlc3VsdC5tYXRjaGVkS2V5d29yZHMgPz8gW10sCiAgICAgIG1pc3NpbmdLZXl3b3JkczogcmF3UmVzdWx0Lm1pc3NpbmdLZXl3b3JkcyA/PyBbXSwKICAgICAgc2tpbGxHYXA6IHJhd1Jlc3VsdC5za2lsbEdhcCA/PyBbXSwKICAgICAgc3VnZ2VzdGlvbnM6IHJhd1Jlc3VsdC5zdWdnZXN0aW9ucyA/PyBbXSwKICAgIH0KCiAgICBhd2FpdCBzdXBhYmFzZS5mcm9tKCdhbmFseXNlcycpLnVwZGF0ZSh7IHN0YXR1czogJ2NvbXBsZXRlZCcsIHJlc3VsdDogZmluYWxSZXN1bHQgfSkuZXEoJ2lkJywgYW5hbHlzaXMuaWQpCgogICAgcmV0dXJuIE5leHRSZXNwb25zZS5qc29uKHsgaWQ6IGFuYWx5c2lzLmlkLCByZXN1bHQ6IGZpbmFsUmVzdWx0IH0pCiAgfSBjYXRjaCAoZXJyKSB7CiAgICBjb25zb2xlLmVycm9yKCdbL2FwaS9hbmFseXplXScsIGVycikKICAgIHJldHVybiBOZXh0UmVzcG9uc2UuanNvbih7IGVycm9yOiAnQW4gdW5leHBlY3RlZCBlcnJvciBvY2N1cnJlZCcgfSwgeyBzdGF0dXM6IDUwMCB9KQogIH0KfQo=
+import { NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { openai, OPENAI_MODEL } from '@/lib/openai'
+import { extractTextFromPDF, truncateCVText } from '@/lib/pdf-parser'
+import { buildAnalysisPrompt } from '@/server/prompts/analysis'
+import { computeOverallScore } from '@/server/scoring'
+import type { AnalysisResult } from '@/types/analysis'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient()
+
+    // getUser() validates the JWT with Supabase Auth servers - safe for Route Handlers
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (!user || authError) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const formData = await request.formData()
+    const cvFile = formData.get('cv') as File | null
+    const jobDescription = formData.get('jobDescription') as string | null
+    const jobTitle = formData.get('jobTitle') as string | null
+    const company = formData.get('company') as string | null
+
+    if (!cvFile || !jobDescription) {
+      return NextResponse.json({ error: 'Missing required fields: cv and jobDescription' }, { status: 400 })
+    }
+    if (cvFile.type !== 'application/pdf') {
+      return NextResponse.json({ error: 'Only PDF files are supported' }, { status: 400 })
+    }
+    if (cvFile.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File size must be under 5MB' }, { status: 400 })
+    }
+
+    const arrayBuffer = await cvFile.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    let cvText: string
+    try {
+      cvText = await extractTextFromPDF(buffer)
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: parseError instanceof Error ? parseError.message : 'Failed to parse PDF' },
+        { status: 422 }
+      )
+    }
+
+    cvText = truncateCVText(cvText)
+
+    const { data: analysis, error: insertError } = await supabase
+      .from('analyses')
+      .insert({
+        user_id: user.id,
+        status: 'processing',
+        cv_text: cvText,
+        job_description: jobDescription.slice(0, 10000),
+        job_title: jobTitle?.trim() || null,
+        company: company?.trim() || null,
+      })
+      .select('id')
+      .single()
+
+    if (insertError || !analysis) {
+      console.error('[Analyze] DB insert error:', insertError)
+      return NextResponse.json({ error: 'Failed to create analysis record' }, { status: 500 })
+    }
+
+    const prompt = buildAnalysisPrompt({
+      cvText,
+      jobDescription: jobDescription.slice(0, 10000),
+      jobTitle: jobTitle ?? undefined,
+      company: company ?? undefined,
+    })
+
+    let rawResult: AnalysisResult['score'] & {
+      summary: string
+      matchedKeywords: string[]
+      missingKeywords: string[]
+      skillGap: AnalysisResult['skillGap']
+      suggestions: AnalysisResult['suggestions']
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: OPENAI_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+      })
+      const content = completion.choices[0]?.message?.content
+      if (!content) throw new Error('Empty response from OpenAI')
+      rawResult = JSON.parse(content)
+    } catch (aiError) {
+      console.error('[Analyze] OpenAI error:', aiError)
+      await supabase.from('analyses').update({ status: 'failed' }).eq('id', analysis.id)
+      return NextResponse.json({ error: 'AI analysis failed. Please try again.' }, { status: 500 })
+    }
+
+    const overall = computeOverallScore({
+      skills: rawResult.score?.skills ?? rawResult.skills ?? 50,
+      keywords: rawResult.score?.keywords ?? rawResult.keywords ?? 50,
+      experience: rawResult.score?.experience ?? rawResult.experience ?? 50,
+      presentation: rawResult.score?.presentation ?? rawResult.presentation ?? 50,
+    })
+
+    const finalResult = {
+      score: {
+        overall,
+        skills: rawResult.score?.skills ?? rawResult.skills ?? 50,
+        keywords: rawResult.score?.keywords ?? rawResult.keywords ?? 50,
+        experience: rawResult.score?.experience ?? rawResult.experience ?? 50,
+        presentation: rawResult.score?.presentation ?? rawResult.presentation ?? 50,
+      },
+      summary: rawResult.summary ?? '',
+      matchedKeywords: rawResult.matchedKeywords ?? [],
+      missingKeywords: rawResult.missingKeywords ?? [],
+      skillGap: rawResult.skillGap ?? [],
+      suggestions: rawResult.suggestions ?? [],
+    }
+
+    await supabase.from('analyses').update({ status: 'completed', result: finalResult }).eq('id', analysis.id)
+
+    return NextResponse.json({ id: analysis.id, result: finalResult })
+  } catch (err) {
+    console.error('[/api/analyze]', err)
+    return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 })
+  }
+}

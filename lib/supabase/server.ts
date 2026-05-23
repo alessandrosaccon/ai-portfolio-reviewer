@@ -1,1 +1,36 @@
-aW1wb3J0IHsgY3JlYXRlU2VydmVyQ2xpZW50IH0gZnJvbSAnQHN1cGFiYXNlL3NzcicKaW1wb3J0IHsgY29va2llcyB9IGZyb20gJ25leHQvaGVhZGVycycKaW1wb3J0IHR5cGUgeyBEYXRhYmFzZSB9IGZyb20gJ0AvdHlwZXMvZGInCgpleHBvcnQgYXN5bmMgZnVuY3Rpb24gY3JlYXRlQ2xpZW50KCkgewogIGNvbnN0IGNvb2tpZVN0b3JlID0gYXdhaXQgY29va2llcygpCgogIHJldHVybiBjcmVhdGVTZXJ2ZXJDbGllbnQ8RGF0YWJhc2U+KAogICAgcHJvY2Vzcy5lbnYuTkVYVF9QVUJMSUNfU1VQQUJBU0VfVVJMISwKICAgIHByb2Nlc3MuZW52Lk5FWFRfUFVCTElDX1NVUEFCQVNFX0FOT05fS0VZISwKICAgIHsKICAgICAgY29va2llczogewogICAgICAgIGdldEFsbCgpIHsKICAgICAgICAgIHJldHVybiBjb29raWVTdG9yZS5nZXRBbGwoKQogICAgICAgIH0sCiAgICAgICAgc2V0QWxsKGNvb2tpZXNUb1NldCkgewogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29va2llc1RvU2V0LmZvckVhY2goKHsgbmFtZSwgdmFsdWUsIG9wdGlvbnMgfSkgPT4gewogICAgICAgICAgICAgIGNvb2tpZVN0b3JlLnNldChuYW1lLCB2YWx1ZSwgb3B0aW9ucykKICAgICAgICAgICAgfSkKICAgICAgICAgIH0gY2F0Y2ggKGVycikgewogICAgICAgICAgICAvLyBUaGlzIGlzIGV4cGVjdGVkIG9ubHkgaW4gcmVhZC1vbmx5IFNlcnZlciBDb21wb25lbnQgY29udGV4dC4KICAgICAgICAgICAgLy8gSW4gUm91dGUgSGFuZGxlcnMgYW5kIFNlcnZlciBBY3Rpb25zIGNvb2tpZXMoKSBpcyB3cml0YWJsZQogICAgICAgICAgICAvLyBhbmQgdGhpcyBibG9jayBzaG91bGQgbmV2ZXIgZXhlY3V0ZS4KICAgICAgICAgICAgaWYgKHByb2Nlc3MuZW52Lk5PREVfRU5WID09PSAnZGV2ZWxvcG1lbnQnKSB7CiAgICAgICAgICAgICAgY29uc29sZS53YXJuKAogICAgICAgICAgICAgICAgJ1tTdXBhYmFzZSBTZXJ2ZXJdIENvb2tpZSBzZXQgZmFpbGVkIC0tIHJlYWQtb25seSBTZXJ2ZXIgQ29tcG9uZW50IGNvbnRleHQgKHNhZmUgdG8gaWdub3JlKTonLAogICAgICAgICAgICAgICAgZXJyCiAgICAgICAgICAgICAgKQogICAgICAgICAgICB9CiAgICAgICAgICB9CiAgICAgICAgfSwKICAgICAgfSwKICAgIH0KICApCn0K
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import type { Database } from '@/types/db'
+
+export async function createClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch (err) {
+            // This is expected only in read-only Server Component context.
+            // In Route Handlers and Server Actions cookies() is writable
+            // and this block should never execute.
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(
+                '[Supabase Server] Cookie set failed -- read-only Server Component context (safe to ignore):',
+                err
+              )
+            }
+          }
+        },
+      },
+    }
+  )
+}
