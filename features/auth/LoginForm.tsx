@@ -22,7 +22,6 @@ type LoginFields = z.infer<typeof schema>
 export function LoginForm() {
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
-  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null)
   const [isPending, setIsPending] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
@@ -31,45 +30,16 @@ export function LoginForm() {
 
   async function onSubmit(data: LoginFields) {
     setServerError(null)
-    setDebugInfo(null)
     setIsPending(true)
 
-    try {
-      const result = await loginAction({
-        email: data.email,
-        password: data.password,
-        redirectTo: searchParams.get('redirectTo') || '/dashboard',
-      })
+    const result = await loginAction({
+      email: data.email,
+      password: data.password,
+      redirectTo: searchParams.get('redirectTo') || '/dashboard',
+    })
 
-      if (result?.debug) {
-        setDebugInfo(result.debug)
-      }
-
-      if (result?.error) {
-        setServerError(result.error)
-        setIsPending(false)
-        return
-      }
-
-      // If we reach here it means redirect() was called server-side
-      // but the client received a result object instead (should not happen).
-      // Show debug anyway.
-      setDebugInfo((prev) => ({
-        ...prev,
-        clientNote: 'Server action returned without error and without redirecting — this is unexpected',
-      }))
-      setIsPending(false)
-
-    } catch (err: unknown) {
-      // NEXT_REDIRECT is thrown by redirect() — it\'s not a real error.
-      // If we catch it, it means redirect() fired but something swallowed it.
-      const isRedirect = err instanceof Error && err.message === 'NEXT_REDIRECT'
-      if (isRedirect) {
-        setDebugInfo({ clientNote: 'NEXT_REDIRECT caught on client — redirect() fired server-side but navigation did not happen. This means the Server Action redirect is being blocked.' })
-      } else {
-        setDebugInfo({ clientNote: String(err) })
-        setServerError('Unexpected client error. See debug panel.')
-      }
+    if (result?.error) {
+      setServerError(result.error)
       setIsPending(false)
     }
   }
@@ -112,7 +82,6 @@ export function LoginForm() {
           <p className="text-xs text-destructive">{errors.password.message}</p>
         )}
       </div>
-
       {serverError && (
         <div
           role="alert"
@@ -121,17 +90,6 @@ export function LoginForm() {
           {serverError}
         </div>
       )}
-
-      {/* DEBUG PANEL — remove before going live */}
-      {debugInfo && (
-        <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3">
-          <p className="mb-1.5 text-xs font-semibold text-yellow-400">DEBUG</p>
-          <pre className="overflow-x-auto whitespace-pre-wrap break-all text-xs text-yellow-300">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </div>
-      )}
-
       <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
