@@ -29,44 +29,55 @@ export function LoginForm() {
     setLogs([])
     setLoading(true)
 
-    log(true, `[1] Starting login for: ${email}`)
-    log(true, `[2] redirectTo = "${redirectTo}"`)
-
     try {
       const supabase = createClient()
-      log(true, '[3] Supabase browser client created')
-      log(true, `[4] SUPABASE_URL = ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'MISSING'}`)
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+      // Extract project ref from URL: https://<ref>.supabase.co
+      const projectRef = url.replace('https://', '').split('.')[0]
+      log(true, `[1] project ref from URL: "${projectRef}"`)
 
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
-        log(false, `[5] signInWithPassword ERROR: ${error.message} (code: ${error.code ?? 'n/a'})`)
+        log(false, `[2] signInWithPassword ERROR: ${error.message}`)
         setLoading(false)
         return
       }
 
-      log(true, `[5] signInWithPassword OK — user id: ${data.user?.id ?? 'null'}`)
-      log(true, `[6] session expires_at: ${data.session?.expires_at ?? 'null'}`)
-      log(true, `[7] access_token present: ${!!data.session?.access_token}`)
+      log(true, `[2] signInWithPassword OK — user: ${data.user?.id}`)
+      log(true, `[3] access_token present: ${!!data.session?.access_token}`)
 
-      // Check cookies written
-      const cookieNames = document.cookie
-        .split(';')
-        .map((c) => c.trim().split('=')[0])
-        .filter((n) => n.startsWith('sb-'))
+      // Log ALL cookies, not just sb-*
+      const allCookies = document.cookie.split(';').map((c) => c.trim().split('=')[0])
+      log(true, `[4] ALL cookie names (${allCookies.length}): ${allCookies.join(' | ')}`)
+
+      const sbCookies = allCookies.filter((n) => n.startsWith('sb-'))
       log(
-        cookieNames.length > 0,
-        `[8] sb-* cookies in browser: ${cookieNames.length > 0 ? cookieNames.join(', ') : 'NONE FOUND'}`
+        sbCookies.length > 0,
+        `[5] sb-* cookies (${sbCookies.length}): ${sbCookies.length > 0 ? sbCookies.join(' | ') : 'NONE'}`
       )
 
-      log(true, `[9] Navigating to: ${redirectTo} via window.location.href`)
-      setLoading(false)
+      const expectedCookie = `sb-${projectRef}-auth-token`
+      const exactMatch = sbCookies.includes(expectedCookie)
+      log(exactMatch, `[6] expected cookie "${expectedCookie}" found: ${exactMatch}`)
 
-      // Small delay so logs are visible before navigation
-      await new Promise((r) => setTimeout(r, 1500))
+      if (!exactMatch && sbCookies.length > 0) {
+        log(false, `[6b] MISMATCH — expected: "${expectedCookie}" got: "${sbCookies[0]}"`)
+      }
+
+      // After writing cookies, immediately re-read the session
+      const { data: sessionCheck } = await supabase.auth.getSession()
+      log(
+        !!sessionCheck.session,
+        `[7] getSession() after login: ${sessionCheck.session ? 'HAS SESSION' : 'NO SESSION'}`
+      )
+
+      log(true, `[8] navigating to ${redirectTo} in 2s…`)
+      setLoading(false)
+      await new Promise((r) => setTimeout(r, 2000))
       window.location.href = redirectTo
     } catch (err: unknown) {
-      log(false, `[!] Unexpected exception: ${err instanceof Error ? err.message : String(err)}`)
+      log(false, `[!] Exception: ${err instanceof Error ? err.message : String(err)}`)
       setLoading(false)
     }
   }
@@ -123,13 +134,12 @@ export function LoginForm() {
         </p>
       </form>
 
-      {/* Debug log panel */}
       {logs.length > 0 && (
         <div className="mt-2 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-950/30">
           <p className="mb-2 text-xs font-semibold text-yellow-800 dark:text-yellow-300">
             \ud83d\udd0d Login trace
           </p>
-          <ul className="flex flex-col gap-0.5">
+          <ul className="flex flex-col gap-1">
             {logs.map((entry, i) => (
               <li
                 key={i}
