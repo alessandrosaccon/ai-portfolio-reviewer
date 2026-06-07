@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
             response.cookies.set(name, value, {
               ...options,
               httpOnly: true,
-              secure: true,
+              // secure: true only in production — localhost runs on HTTP and
+              // a Secure cookie would never be sent by the browser there.
+              secure: process.env.NODE_ENV === 'production',
               sameSite: 'lax',
               path: '/',
             })
