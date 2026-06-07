@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { login } from './actions'
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -21,32 +22,28 @@ type LoginFields = z.infer<typeof schema>
 export function LoginForm() {
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
-  const [isPending, setIsPending] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFields>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFields>({
     resolver: zodResolver(schema),
   })
 
-  async function onSubmit(data: LoginFields) {
+  function onSubmit(data: LoginFields) {
     setServerError(null)
-    setIsPending(true)
-
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: data.email, password: data.password }),
+    startTransition(async () => {
+      const fd = new FormData()
+      fd.set('email', data.email)
+      fd.set('password', data.password)
+      fd.set('redirectTo', redirectTo)
+      const result = await login(fd)
+      // login() calls redirect() on success — result is only returned on error
+      if (result?.error) setServerError(result.error)
     })
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      setServerError(body.error ?? 'Login failed. Please try again.')
-      setIsPending(false)
-      return
-    }
-
-    // Full navigation so the browser sends the new HttpOnly cookie
-    window.location.href = redirectTo
   }
 
   return (
@@ -90,7 +87,10 @@ export function LoginForm() {
       </div>
 
       {serverError && (
-        <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+        <div
+          role="alert"
+          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+        >
           {serverError}
         </div>
       )}
