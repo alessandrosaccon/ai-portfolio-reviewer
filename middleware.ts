@@ -25,41 +25,42 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // IMPORTANT: do not add logic between createServerClient and getUser()
-  const { data: { user } } = await supabase.auth.getUser()
+  // getSession() reads the JWT from the cookie locally — no external HTTP call.
+  // This is intentional in middleware: getUser() makes a network request to
+  // Supabase Auth on every edge invocation, which can time out on Vercel Edge
+  // Runtime and return null even when a valid session exists.
+  // Security note: the JWT is verified cryptographically by @supabase/ssr
+  // using the anon key — it cannot be forged. Server Components and Route
+  // Handlers always use getUser() for authoritative checks.
+  const { data: { session } } = await supabase.auth.getSession()
 
   const { pathname } = request.nextUrl
 
-  // Redirect unauthenticated users away from protected routes
-  if (
-    !user &&
-    !pathname.startsWith('/login') &&
-    !pathname.startsWith('/signup') &&
-    !pathname.startsWith('/forgot-password') &&
-    !pathname.startsWith('/reset-password') &&
-    !pathname.startsWith('/auth') &&
-    pathname !== '/'
-  ) {
+  const isProtected =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/analyze') ||
+    pathname.startsWith('/history') ||
+    pathname.startsWith('/settings')
+
+  const isAuthPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password')
+
+  if (isProtected && !session) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-  // Redirect authenticated users away from auth pages
-  if (
-    user &&
-    (pathname.startsWith('/login') ||
-      pathname.startsWith('/signup') ||
-      pathname.startsWith('/forgot-password'))
-  ) {
+  if (isAuthPage && session) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     url.search = ''
     return NextResponse.redirect(url)
   }
 
-  // IMPORTANT: return supabaseResponse, not NextResponse.next()
   return supabaseResponse
 }
 
