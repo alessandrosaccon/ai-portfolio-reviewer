@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   History,
-  Settings,
   PlusCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -22,11 +21,6 @@ const navItems = [
     label: 'History',
     href: '/history',
     icon: History,
-  },
-  {
-    label: 'Settings',
-    href: '/settings',
-    icon: Settings,
   },
 ]
 
