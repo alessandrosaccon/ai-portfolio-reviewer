@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { cn } from '@/lib/utils'
-import { getScoreLabel } from '@/server/scoring'
+import { cn, getScoreLabel } from '@/lib/utils'
 import type { ScoreBreakdown } from '@/types/analysis'
 
 interface ScoreCardProps {

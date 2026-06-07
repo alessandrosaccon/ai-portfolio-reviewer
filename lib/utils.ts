@@ -24,3 +24,18 @@ export function slugify(str: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
 }
+
+/**
+ * Pure client-safe utility — returns a human-readable label and a
+ * semantic variant for a 0-100 score value.
+ * Kept here (not in server/scoring) so Client Components can import it
+ * without bundling server-only modules.
+ */
+export function getScoreLabel(score: number): {
+  label: string
+  variant: 'success' | 'warning' | 'destructive'
+} {
+  if (score >= 75) return { label: 'Strong match', variant: 'success' }
+  if (score >= 50) return { label: 'Partial match', variant: 'warning' }
+  return { label: 'Weak match', variant: 'destructive' }
+}

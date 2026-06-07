@@ -3,8 +3,7 @@
 import Link from 'next/link'
 import { PlusCircle, ArrowRight, FileSearch, TrendingUp, Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { formatDate } from '@/lib/utils'
-import { getScoreLabel } from '@/server/scoring'
+import { formatDate, getScoreLabel } from '@/lib/utils'
 import type { Database } from '@/types/db'
 
 type AnalysisRow = Database['public']['Tables']['analyses']['Row']
@@ -89,7 +88,7 @@ export function DashboardShell({ analyses }: DashboardShellProps) {
         <div className="flex flex-col gap-2">
           <p className="mb-1 label-caps">Recent analyses</p>
           {analyses.map((analysis) => (
-            <AnalysisRow key={analysis.id} analysis={analysis} />
+            <AnalysisListItem key={analysis.id} analysis={analysis} />
           ))}
           <div className="mt-3 flex justify-end">
             <Link
@@ -147,7 +146,7 @@ function EmptyState() {
   )
 }
 
-function AnalysisRow({ analysis }: { analysis: Partial<AnalysisRow> }) {
+function AnalysisListItem({ analysis }: { analysis: Partial<AnalysisRow> }) {
   const result = analysis.result as Record<string, unknown> | null
   const overallScore =
     result && typeof result === 'object' && 'score' in result
