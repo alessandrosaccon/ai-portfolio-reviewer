@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,97 +9,142 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 
+type LogEntry = { ok: boolean; msg: string }
+
 export function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [logs, setLogs] = useState<LogEntry[]>([])
+
+  function log(ok: boolean, msg: string) {
+    setLogs((prev) => [...prev, { ok, msg }])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError(null)
+    setLogs([])
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    log(true, `[1] Starting login for: ${email}`)
+    log(true, `[2] redirectTo = "${redirectTo}"`)
 
-    if (error) {
-      setError(error.message)
+    try {
+      const supabase = createClient()
+      log(true, '[3] Supabase browser client created')
+      log(true, `[4] SUPABASE_URL = ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'MISSING'}`)
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+      if (error) {
+        log(false, `[5] signInWithPassword ERROR: ${error.message} (code: ${error.code ?? 'n/a'})`)
+        setLoading(false)
+        return
+      }
+
+      log(true, `[5] signInWithPassword OK — user id: ${data.user?.id ?? 'null'}`)
+      log(true, `[6] session expires_at: ${data.session?.expires_at ?? 'null'}`)
+      log(true, `[7] access_token present: ${!!data.session?.access_token}`)
+
+      // Check cookies written
+      const cookieNames = document.cookie
+        .split(';')
+        .map((c) => c.trim().split('=')[0])
+        .filter((n) => n.startsWith('sb-'))
+      log(
+        cookieNames.length > 0,
+        `[8] sb-* cookies in browser: ${cookieNames.length > 0 ? cookieNames.join(', ') : 'NONE FOUND'}`
+      )
+
+      log(true, `[9] Navigating to: ${redirectTo} via window.location.href`)
       setLoading(false)
-      return
-    }
 
-    // Hard navigation: forces a full page reload so the middleware
-    // reads the freshly written session cookies from the browser.
-    window.location.href = redirectTo
+      // Small delay so logs are visible before navigation
+      await new Promise((r) => setTimeout(r, 1500))
+      window.location.href = redirectTo
+    } catch (err: unknown) {
+      log(false, `[!] Unexpected exception: ${err instanceof Error ? err.message : String(err)}`)
+      setLoading(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="you@example.com"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link
-            href="/forgot-password"
-            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-          >
-            Forgot password?
-          </Link>
+    <div className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
 
-      {error && (
-        <div
-          role="alert"
-          className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
-        >
-          {error}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Password</Label>
+            <Link
+              href="/forgot-password"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in\u2026</>
+            : 'Sign in'
+          }
+        </Button>
+
+        <p className="text-center text-xs text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </form>
+
+      {/* Debug log panel */}
+      {logs.length > 0 && (
+        <div className="mt-2 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-950/30">
+          <p className="mb-2 text-xs font-semibold text-yellow-800 dark:text-yellow-300">
+            \ud83d\udd0d Login trace
+          </p>
+          <ul className="flex flex-col gap-0.5">
+            {logs.map((entry, i) => (
+              <li
+                key={i}
+                className={`font-mono text-xs break-all ${
+                  entry.ok
+                    ? 'text-yellow-900 dark:text-yellow-200'
+                    : 'font-bold text-red-600 dark:text-red-400'
+                }`}
+              >
+                {entry.ok ? '\u2713' : '\u2717'} {entry.msg}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? (
-          <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
-        ) : (
-          'Sign in'
-        )}
-      </Button>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Don&apos;t have an account?{' '}
-        <Link
-          href="/signup"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
-        >
-          Sign up
-        </Link>
-      </p>
-    </form>
+    </div>
   )
 }
