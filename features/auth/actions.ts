@@ -1,18 +1,21 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 /**
  * Login Server Action.
  *
- * Using a Server Action + redirect() instead of a fetch() to /api/auth/login
- * is the only reliable pattern on Vercel: the Set-Cookie headers and the
- * redirect happen in the same HTTP response, so the browser receives the
- * session cookies *before* it navigates to /dashboard. With the old fetch()
- * approach the cookie write and the window.location.href navigation were two
- * separate round-trips, and the middleware would intercept the second one
- * before the browser had committed the cookies from the first one.
+ * IMPORTANT — Next.js 15 + @supabase/ssr known issue:
+ * Calling redirect() inside a Server Action that also writes cookies via
+ * cookieStore.set() causes a race condition: the redirect throws before
+ * the Set-Cookie headers are flushed to the response, so the browser
+ * navigates to /dashboard without the session cookies → middleware
+ * sees no session → redirects back to /login → infinite loop.
+ *
+ * Fix: return { redirectTo } and let the client component call router.push().
+ * By the time the Server Action resolves on the client, the browser has
+ * already committed all Set-Cookie headers from the response, so the
+ * subsequent navigation carries the session cookies correctly.
  */
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -26,10 +29,7 @@ export async function login(formData: FormData) {
     return { error: error.message }
   }
 
-  // redirect() throws internally — must be called outside try/catch.
-  // The session cookies are written into this same response before the
-  // browser follows the redirect, so the middleware sees them immediately.
-  redirect(redirectTo)
+  return { redirectTo }
 }
 
 /**
@@ -44,16 +44,14 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { full_name: fullName },
-    },
+    options: { data: { full_name: fullName } },
   })
 
   if (error) {
     return { error: error.message }
   }
 
-  redirect('/dashboard')
+  return { redirectTo: '/dashboard' }
 }
 
 /**
@@ -62,5 +60,5 @@ export async function signup(formData: FormData) {
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  redirect('/login')
+  return { redirectTo: '/login' }
 }

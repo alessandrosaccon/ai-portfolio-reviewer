@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +20,7 @@ const schema = z.object({
 type LoginFields = z.infer<typeof schema>
 
 export function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [serverError, setServerError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -40,9 +41,20 @@ export function LoginForm() {
       fd.set('email', data.email)
       fd.set('password', data.password)
       fd.set('redirectTo', redirectTo)
+
       const result = await login(fd)
-      // login() calls redirect() on success — result is only returned on error
-      if (result?.error) setServerError(result.error)
+
+      if ('error' in result && result.error) {
+        setServerError(result.error)
+        return
+      }
+
+      // Cookies are fully committed by the time we reach here.
+      // router.push() triggers a soft navigation — the middleware
+      // will now find the session cookies and allow access.
+      if ('redirectTo' in result && result.redirectTo) {
+        router.push(result.redirectTo)
+      }
     })
   }
 

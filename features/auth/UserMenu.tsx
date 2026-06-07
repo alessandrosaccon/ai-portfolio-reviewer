@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { LogOut, Settings, User, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -12,22 +13,19 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user }: UserMenuProps) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const ref = useRef<HTMLDivElement>(null)
 
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  // Close on Escape
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
@@ -39,7 +37,10 @@ export function UserMenu({ user }: UserMenuProps) {
   function handleLogout() {
     setOpen(false)
     startTransition(async () => {
-      await logout()
+      const result = await logout()
+      if ('redirectTo' in result && result.redirectTo) {
+        router.push(result.redirectTo)
+      }
     })
   }
 
@@ -77,7 +78,6 @@ export function UserMenu({ user }: UserMenuProps) {
           role="menu"
           className="absolute right-0 top-full z-50 mt-1.5 w-52 rounded-lg border border-border bg-card py-1 shadow-md"
         >
-          {/* User info */}
           <div className="px-3 py-2">
             {user.fullName && (
               <p className="text-sm font-medium text-foreground">{user.fullName}</p>
