@@ -1,20 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ success: true })
 
-  // Delete all sb- cookies
-  request.cookies.getAll()
-    .filter((c) => c.name.startsWith('sb-'))
-    .forEach((c) => {
-      response.cookies.set(c.name, '', {
-        path: '/',
-        maxAge: 0,
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-      })
-    })
+  // Use createServerClient so Supabase can invalidate the session server-side
+  // and correctly clear all chunked cookie variants (sb-...-auth-token.0, .1, …)
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, {
+              ...options,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'lax',
+              path: '/',
+            })
+          })
+        },
+      },
+    }
+  )
+
+  await supabase.auth.signOut()
 
   return response
 }

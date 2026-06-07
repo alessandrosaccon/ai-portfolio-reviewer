@@ -1,45 +1,25 @@
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/shared/Sidebar'
 import { AppHeader } from '@/components/shared/AppHeader'
 import type { UserProfile } from '@/types/user'
 
-function getSessionFromCookieStore(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  const cookieName = cookieStore.getAll()
-    .map((c) => c.name)
-    .find((name) => name.startsWith('sb-') && name.endsWith('-auth-token'))
-
-  if (!cookieName) return null
-
-  try {
-    const raw = cookieStore.get(cookieName)?.value
-    if (!raw) return null
-    const decoded = decodeURIComponent(raw)
-    const parsed = JSON.parse(decoded)
-    const accessToken = parsed?.access_token
-    if (!accessToken) return null
-
-    const payloadB64 = accessToken.split('.')[1]
-    if (!payloadB64) return null
-    const payload = JSON.parse(atob(payloadB64))
-    if (!payload?.exp || Date.now() / 1000 >= payload.exp) return null
-
-    return {
-      user: parsed.user ?? null,
-      access_token: accessToken,
-    }
-  } catch {
-    return null
-  }
-}
-
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies()
-  const session = getSessionFromCookieStore(cookieStore)
+  const supabase = await createClient()
 
-  if (!session) redirect('/login')
+  // getUser() re-validates the session against the Supabase Auth server.
+  // This is the only correct way to check auth in a Server Component —
+  // never rely on manual cookie parsing, which breaks with chunked tokens
+  // and cannot detect revoked sessions.
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
 
-  const user = session.user
+  if (error || !user) {
+    redirect('/login')
+  }
+
   const profile: UserProfile = {
     id: user.id,
     email: user.email ?? '',
