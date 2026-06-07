@@ -1,65 +1,45 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { login } from './actions'
-
-const schema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-})
-
-type LoginFields = z.infer<typeof schema>
+import { createClient } from '@/lib/supabase/client'
 
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFields>({
-    resolver: zodResolver(schema),
-  })
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  function onSubmit(data: LoginFields) {
-    setServerError(null)
-    startTransition(async () => {
-      const fd = new FormData()
-      fd.set('email', data.email)
-      fd.set('password', data.password)
-      fd.set('redirectTo', redirectTo)
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
-      const result = await login(fd)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-      if ('error' in result && result.error) {
-        setServerError(result.error)
-        return
-      }
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
 
-      // Cookies are fully committed by the time we reach here.
-      // router.push() triggers a soft navigation — the middleware
-      // will now find the session cookies and allow access.
-      if ('redirectTo' in result && result.redirectTo) {
-        router.push(result.redirectTo)
-      }
-    })
+    // Hard navigation: forces a full page reload so the middleware
+    // reads the freshly written session cookies from the browser.
+    window.location.href = redirectTo
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -67,12 +47,10 @@ export function LoginForm() {
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
-          aria-invalid={!!errors.email}
-          {...register('email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -90,25 +68,23 @@ export function LoginForm() {
           type="password"
           placeholder="••••••••"
           autoComplete="current-password"
-          aria-invalid={!!errors.password}
-          {...register('password')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
       </div>
 
-      {serverError && (
+      {error && (
         <div
           role="alert"
           className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
         >
-          {serverError}
+          {error}
         </div>
       )}
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? (
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Signing in…</>
         ) : (
           'Sign in'

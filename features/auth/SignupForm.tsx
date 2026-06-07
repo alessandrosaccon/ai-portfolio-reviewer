@@ -1,62 +1,45 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { signup } from './actions'
-
-const schema = z.object({
-  fullName: z.string().min(2, 'Enter your full name'),
-  email: z.string().email('Enter a valid email address'),
-  password: z
-    .string()
-    .min(8, 'At least 8 characters')
-    .regex(/[A-Z]/, 'Include at least one uppercase letter')
-    .regex(/[0-9]/, 'Include at least one number'),
-})
-
-type SignupFields = z.infer<typeof schema>
+import { createClient } from '@/lib/supabase/client'
 
 export function SignupForm() {
   const router = useRouter()
-  const [serverError, setServerError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupFields>({
-    resolver: zodResolver(schema),
-  })
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
-  function onSubmit(data: SignupFields) {
-    setServerError(null)
-    startTransition(async () => {
-      const fd = new FormData()
-      fd.set('fullName', data.fullName)
-      fd.set('email', data.email)
-      fd.set('password', data.password)
-      const result = await signup(fd)
-      if ('error' in result && result.error) {
-        setServerError(result.error)
-        return
-      }
-      if ('redirectTo' in result && result.redirectTo) {
-        router.push(result.redirectTo)
-      }
+    const supabase = createClient()
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
     })
+
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    window.location.href = '/dashboard'
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="fullName">Full name</Label>
         <Input
@@ -64,12 +47,10 @@ export function SignupForm() {
           type="text"
           placeholder="Alessandro Saccon"
           autoComplete="name"
-          aria-invalid={!!errors.fullName}
-          {...register('fullName')}
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
         />
-        {errors.fullName && (
-          <p className="text-xs text-destructive">{errors.fullName.message}</p>
-        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -79,12 +60,10 @@ export function SignupForm() {
           type="email"
           placeholder="you@example.com"
           autoComplete="email"
-          aria-invalid={!!errors.email}
-          {...register('email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
-        {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
-        )}
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -94,29 +73,24 @@ export function SignupForm() {
           type="password"
           placeholder="••••••••"
           autoComplete="new-password"
-          aria-invalid={!!errors.password}
-          {...register('password')}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
-        )}
       </div>
 
-      {serverError && (
+      {error && (
         <div
           role="alert"
           className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive"
         >
-          {serverError}
+          {error}
         </div>
       )}
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Creating account…
-          </>
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? (
+          <><Loader2 className="h-4 w-4 animate-spin" /> Creating account…</>
         ) : (
           'Create account'
         )}

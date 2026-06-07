@@ -6,19 +6,9 @@ import type { UserProfile } from '@/types/user'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // getUser() re-validates the session against the Supabase Auth server.
-  // This is the only correct way to check auth in a Server Component —
-  // never rely on manual cookie parsing, which breaks with chunked tokens
-  // and cannot detect revoked sessions.
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    redirect('/login')
-  }
+  if (!user) redirect('/login')
 
   const profile: UserProfile = {
     id: user.id,
