@@ -9,8 +9,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 
-type LogEntry = { ok: boolean; msg: string }
-
 export function LoginForm() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirectTo') || '/dashboard'
@@ -18,63 +16,26 @@ export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [logs, setLogs] = useState<LogEntry[]>([])
-
-  function log(ok: boolean, msg: string) {
-    setLogs((prev) => [...prev, { ok, msg }])
-  }
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLogs([])
+    setError(null)
     setLoading(true)
 
     try {
       const supabase = createClient()
-      const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-      const projectRef = url.replace('https://', '').split('.')[0]
-      log(true, `[1] project ref from URL: "${projectRef}"`)
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (error) {
-        log(false, `[2] signInWithPassword ERROR: ${error.message}`)
+      if (signInError) {
+        setError(signInError.message)
         setLoading(false)
         return
       }
 
-      log(true, `[2] signInWithPassword OK — user: ${data.user?.id}`)
-      log(true, `[3] access_token present: ${!!data.session?.access_token}`)
-
-      const allCookies = document.cookie.split(';').map((c) => c.trim().split('=')[0])
-      log(true, `[4] ALL cookie names (${allCookies.length}): ${allCookies.join(' | ')}`)
-
-      const sbCookies = allCookies.filter((n) => n.startsWith('sb-'))
-      log(
-        sbCookies.length > 0,
-        `[5] sb-* cookies (${sbCookies.length}): ${sbCookies.length > 0 ? sbCookies.join(' | ') : 'NONE'}`
-      )
-
-      const expectedCookie = `sb-${projectRef}-auth-token`
-      const exactMatch = sbCookies.includes(expectedCookie)
-      log(exactMatch, `[6] expected cookie "${expectedCookie}" found: ${exactMatch}`)
-
-      if (!exactMatch && sbCookies.length > 0) {
-        log(false, `[6b] MISMATCH — expected: "${expectedCookie}" got: "${sbCookies[0]}"`)
-      }
-
-      const { data: sessionCheck } = await supabase.auth.getSession()
-      log(
-        !!sessionCheck.session,
-        `[7] getSession() after login: ${sessionCheck.session ? 'HAS SESSION' : 'NO SESSION'}`
-      )
-
-      log(true, `[8] navigating to ${redirectTo} in 2s…`)
-      setLoading(false)
-      await new Promise((r) => setTimeout(r, 2000))
       window.location.href = redirectTo
     } catch (err: unknown) {
-      log(false, `[!] Exception: ${err instanceof Error ? err.message : String(err)}`)
+      setError(err instanceof Error ? err.message : 'Something went wrong.')
       setLoading(false)
     }
   }
@@ -116,6 +77,12 @@ export function LoginForm() {
           />
         </div>
 
+        {error && (
+          <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+            {error}
+          </p>
+        )}
+
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? (
             <>
@@ -137,28 +104,6 @@ export function LoginForm() {
           </Link>
         </p>
       </form>
-
-      {logs.length > 0 && (
-        <div className="mt-2 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-950/30">
-          <p className="mb-2 text-xs font-semibold text-yellow-800 dark:text-yellow-300">
-            🔍 Login trace
-          </p>
-          <ul className="flex flex-col gap-1">
-            {logs.map((entry, i) => (
-              <li
-                key={i}
-                className={`font-mono text-xs break-all ${
-                  entry.ok
-                    ? 'text-yellow-900 dark:text-yellow-200'
-                    : 'font-bold text-red-600 dark:text-red-400'
-                }`}
-              >
-                {entry.ok ? '\u2713' : '\u2717'} {entry.msg}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }

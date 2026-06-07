@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { LogOut, Settings, User, ChevronDown } from 'lucide-react'
+import { LogOut, Settings, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -37,7 +37,7 @@ export function UserMenu({ user }: UserMenuProps) {
     setLoading(true)
     const supabase = createClient()
     await supabase.auth.signOut()
-    window.location.href = '/login'
+    window.location.href = '/'
   }
 
   const initials = user.fullName
@@ -72,10 +72,9 @@ export function UserMenu({ user }: UserMenuProps) {
       {open && (
         <div
           role="menu"
-          // Opens UPWARD — the trigger sits at the bottom of the sidebar,
-          // so bottom-full avoids clipping off-screen.
           className="absolute bottom-full left-0 z-50 mb-1.5 w-56 rounded-lg border border-border bg-card py-1 shadow-lg"
         >
+          {/* User info */}
           <div className="px-3 py-2">
             {user.fullName && (
               <p className="text-sm font-medium text-foreground">{user.fullName}</p>
@@ -95,16 +94,6 @@ export function UserMenu({ user }: UserMenuProps) {
             Settings
           </Link>
 
-          <Link
-            href="/settings/profile"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-          >
-            <User className="h-4 w-4 shrink-0" />
-            Profile
-          </Link>
-
           <div className="my-1 h-px bg-border" />
 
           <button
@@ -114,7 +103,7 @@ export function UserMenu({ user }: UserMenuProps) {
             className="flex w-full items-center gap-2 px-3 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
           >
             <LogOut className="h-4 w-4 shrink-0" />
-            {loading ? 'Signing out\u2026' : 'Sign out'}
+            {loading ? 'Signing out…' : 'Sign out'}
           </button>
         </div>
       )}
