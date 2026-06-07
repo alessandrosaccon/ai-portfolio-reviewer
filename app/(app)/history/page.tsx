@@ -2,9 +2,10 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { HistoryList } from '@/features/history/HistoryList'
 
-export const metadata: Metadata = {
-  title: 'History',
-}
+export const metadata: Metadata = { title: 'History' }
+
+// Always fetch fresh data — never serve a cached version after a new analysis.
+export const dynamic = 'force-dynamic'
 
 export default async function HistoryPage() {
   const supabase = await createClient()

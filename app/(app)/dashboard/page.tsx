@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { DashboardShell } from '@/features/dashboard/DashboardShell'
+import { DashboardClient } from '@/features/dashboard/DashboardClient'
 
-export const metadata: Metadata = {
-  title: 'Dashboard',
-}
+export const metadata: Metadata = { title: 'Dashboard' }
+
+// Always fresh — the dashboard shows the latest analyses.
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -13,7 +14,7 @@ export default async function DashboardPage() {
     .from('analyses')
     .select('id, status, job_title, company, result, created_at')
     .order('created_at', { ascending: false })
-    .limit(5)
+    .limit(10)
 
-  return <DashboardShell analyses={analyses ?? []} />
+  return <DashboardClient analyses={analyses ?? []} />
 }

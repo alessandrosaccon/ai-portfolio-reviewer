@@ -2,26 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import {
-  LayoutDashboard,
-  History,
-  PlusCircle,
-} from 'lucide-react'
+import { LayoutDashboard, History, PlusCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { UserMenu } from '@/features/auth/UserMenu'
 import type { UserProfile } from '@/types/user'
 
 const navItems = [
-  {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    label: 'History',
-    href: '/history',
-    icon: History,
-  },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'History',   href: '/history',   icon: History },
 ]
 
 interface SidebarProps {
@@ -32,7 +20,8 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-card">
+    // w-64 = 256px — enough room for full names like "Alessandro Saccon"
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-card">
       {/* Logo */}
       <div className="flex h-14 items-center border-b border-border px-4">
         <Link
@@ -64,7 +53,6 @@ export function Sidebar({ user }: SidebarProps) {
             item.href === '/dashboard'
               ? pathname === '/dashboard'
               : pathname.startsWith(item.href)
-
           return (
             <Link
               key={item.href}
@@ -76,12 +64,7 @@ export function Sidebar({ user }: SidebarProps) {
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
-              <item.icon
-                className={cn(
-                  'h-4 w-4 shrink-0',
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                )}
-              />
+              <item.icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
               {item.label}
             </Link>
           )

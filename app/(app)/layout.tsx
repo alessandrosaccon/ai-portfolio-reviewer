@@ -4,6 +4,9 @@ import { Sidebar } from '@/components/shared/Sidebar'
 import { AppHeader } from '@/components/shared/AppHeader'
 import type { UserProfile } from '@/types/user'
 
+// Force-dynamic so getUser() is never served from cache after login/logout.
+export const dynamic = 'force-dynamic'
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
