@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { getScoreLabel } from '@/server/scoring'
 import type { ScoreBreakdown } from '@/types/analysis'
@@ -18,112 +19,184 @@ const dimensionLabels: Record<keyof Omit<ScoreBreakdown, 'overall'>, string> = {
 }
 
 const dimensionDescriptions: Record<keyof Omit<ScoreBreakdown, 'overall'>, string> = {
-  skills: 'How well your technical and soft skills align with requirements',
-  keywords: 'Presence of ATS-relevant terms from the job description',
-  experience: 'Seniority level and years of experience match',
-  presentation: 'Clarity, structure and readability of your CV',
+  skills: 'Technical and soft skills vs requirements',
+  keywords: 'ATS-relevant terms from the job description',
+  experience: 'Seniority level and years of experience',
+  presentation: 'Clarity, structure and readability',
+}
+
+// Animated count-up hook
+function useCountUp(target: number, duration = 900) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    let start: number | null = null
+    const step = (ts: number) => {
+      if (!start) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      // ease-out-cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setValue(Math.round(eased * target))
+      if (progress < 1) requestAnimationFrame(step)
+    }
+    requestAnimationFrame(step)
+  }, [target, duration])
+  return value
+}
+
+// SVG arc ring
+function ScoreRing({ value, variant }: { value: number; variant: 'success' | 'warning' | 'destructive' }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  const size = 96
+  const strokeWidth = 5
+  const r = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * r
+  const progress = mounted ? (value / 100) * circumference : 0
+
+  const ringColor = {
+    success: 'stroke-emerald-500',
+    warning: 'stroke-amber-500',
+    destructive: 'stroke-red-500',
+  }[variant]
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+      {/* Track */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        strokeWidth={strokeWidth}
+        className="stroke-border"
+      />
+      {/* Progress */}
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference - progress}
+        className={cn(ringColor, 'transition-all duration-700 ease-out')}
+      />
+    </svg>
+  )
+}
+
+function DimensionBar({
+  label,
+  description,
+  value,
+  barColor,
+  delay = 0,
+}: {
+  label: string
+  description: string
+  value: number
+  barColor: string
+  delay?: number
+}) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[13px] font-medium text-foreground">{label}</span>
+          <span className="text-xs text-muted-foreground">{description}</span>
+        </div>
+        <span className="shrink-0 font-mono text-[13px] font-semibold tabular-nums text-foreground">
+          {value}
+        </span>
+      </div>
+      <div className="h-[5px] w-full overflow-hidden rounded-full bg-secondary">
+        <div
+          className={cn('h-full rounded-full transition-all duration-700 ease-out', barColor)}
+          style={{ width: mounted ? `${value}%` : '0%' }}
+        />
+      </div>
+    </div>
+  )
 }
 
 export function ScoreCard({ score, jobTitle, company }: ScoreCardProps) {
   const { label, variant } = getScoreLabel(score.overall)
+  const displayScore = useCountUp(score.overall)
 
-  const variantStyles = {
-    success: {
-      ring: 'border-emerald-500/30',
-      bg: 'bg-emerald-500/10',
-      text: 'text-emerald-500',
-      badge: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-    },
-    warning: {
-      ring: 'border-amber-500/30',
-      bg: 'bg-amber-500/10',
-      text: 'text-amber-500',
-      badge: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-    },
-    destructive: {
-      ring: 'border-red-500/30',
-      bg: 'bg-red-500/10',
-      text: 'text-red-500',
-      badge: 'bg-red-500/15 text-red-600 dark:text-red-400',
-    },
+  const scoreTextColor = {
+    success: 'text-emerald-500',
+    warning: 'text-amber-500',
+    destructive: 'text-red-500',
   }[variant]
 
-  const dimensions = Object.entries(dimensionLabels) as [
-    keyof Omit<ScoreBreakdown, 'overall'>,
-    string,
-  ][]
+  const scoreBadgeStyle = {
+    success: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    warning: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    destructive: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  }[variant]
+
+  const barColor = {
+    success: 'bg-emerald-500',
+    warning: 'bg-amber-500',
+    destructive: 'bg-red-500',
+  }
+
+  const dimensions = (Object.keys(dimensionLabels) as Array<keyof Omit<ScoreBreakdown, 'overall'>>)
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      {/* Header */}
+    <div className="animate-in-up rounded-xl border border-border bg-card p-6 shadow-sm">
+
+      {/* Header row: title + ring */}
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Fit Score
-          </p>
+        <div className="flex flex-col gap-1 pt-1">
+          <p className="label-caps">Fit Score</p>
           {(jobTitle || company) && (
-            <p className="text-sm font-medium text-foreground">
+            <p className="mt-1 text-[13px] font-medium text-foreground">
               {jobTitle ?? 'Unknown role'}
               {company && (
-                <span className="text-muted-foreground"> at {company}</span>
+                <span className="font-normal text-muted-foreground"> at {company}</span>
               )}
             </p>
           )}
-        </div>
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <div
-            className={cn(
-              'flex h-16 w-16 items-center justify-center rounded-full border-4',
-              variantStyles.ring,
-              variantStyles.bg
-            )}
-          >
-            <span className={cn('text-2xl font-bold tabular-nums', variantStyles.text)}>
-              {score.overall}
-            </span>
-          </div>
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 text-xs font-semibold',
-              variantStyles.badge
-            )}
-          >
+          <span className={cn('mt-2 inline-flex w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold', scoreBadgeStyle)}>
             {label}
           </span>
+        </div>
+
+        {/* Animated ring */}
+        <div className="relative shrink-0">
+          <ScoreRing value={score.overall} variant={variant} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className={cn('font-mono text-xl font-bold tabular-nums leading-none', scoreTextColor)}>
+              {displayScore}
+            </span>
+            <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">/ 100</span>
+          </div>
         </div>
       </div>
 
       {/* Dimension bars */}
       <div className="flex flex-col gap-4">
-        {dimensions.map(([key, dimLabel]) => {
-          const value = score[key]
-          const { variant: dimVariant } = getScoreLabel(value)
-          const barColor = {
-            success: 'bg-emerald-500',
-            warning: 'bg-amber-500',
-            destructive: 'bg-red-500',
-          }[dimVariant]
-
+        {dimensions.map((key, i) => {
+          const dimValue = score[key]
+          const { variant: dimVariant } = getScoreLabel(dimValue)
           return (
-            <div key={key} className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-xs font-medium text-foreground">{dimLabel}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {dimensionDescriptions[key]}
-                  </span>
-                </div>
-                <span className="ml-4 shrink-0 font-mono text-sm font-semibold text-foreground tabular-nums">
-                  {value}
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                <div
-                  className={cn('h-full rounded-full transition-all duration-700', barColor)}
-                  style={{ width: `${value}%` }}
-                />
-              </div>
-            </div>
+            <DimensionBar
+              key={key}
+              label={dimensionLabels[key]}
+              description={dimensionDescriptions[key]}
+              value={dimValue}
+              barColor={barColor[dimVariant]}
+              delay={200 + i * 80}
+            />
           )
         })}
       </div>
