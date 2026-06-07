@@ -19,17 +19,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <ThemeToggle />
       </header>
 
-      {/* Split layout: form left + brand right on md+ */}
+      {/* Split layout: brand LEFT, form RIGHT on lg+ */}
       <main className="flex flex-1">
-        {/* Form side */}
-        <div className="flex flex-1 items-center justify-center px-6 py-14">
-          <div className="w-full max-w-[360px] animate-in-up">
-            {children}
-          </div>
-        </div>
 
-        {/* Brand side — hidden on mobile */}
-        <div className="hidden lg:flex w-[420px] shrink-0 flex-col items-start justify-center border-l border-border bg-card px-12 py-16 gap-8">
+        {/* Brand panel — LEFT, hidden on mobile */}
+        <div className="hidden lg:flex w-[400px] shrink-0 flex-col items-start justify-center border-r border-border bg-card px-12 py-16 gap-8">
           <div className="flex flex-col gap-5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
               <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.75} />
@@ -63,6 +57,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             Used by professionals before every important application.
           </p>
         </div>
+
+        {/* Form side — RIGHT (takes remaining space) */}
+        <div className="flex flex-1 items-center justify-center px-6 py-14">
+          <div className="w-full max-w-[360px] animate-in-up">
+            {children}
+          </div>
+        </div>
+
       </main>
     </div>
   )

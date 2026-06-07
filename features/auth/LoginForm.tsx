@@ -32,7 +32,6 @@ export function LoginForm() {
     try {
       const supabase = createClient()
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-      // Extract project ref from URL: https://<ref>.supabase.co
       const projectRef = url.replace('https://', '').split('.')[0]
       log(true, `[1] project ref from URL: "${projectRef}"`)
 
@@ -47,7 +46,6 @@ export function LoginForm() {
       log(true, `[2] signInWithPassword OK — user: ${data.user?.id}`)
       log(true, `[3] access_token present: ${!!data.session?.access_token}`)
 
-      // Log ALL cookies, not just sb-*
       const allCookies = document.cookie.split(';').map((c) => c.trim().split('=')[0])
       log(true, `[4] ALL cookie names (${allCookies.length}): ${allCookies.join(' | ')}`)
 
@@ -65,7 +63,6 @@ export function LoginForm() {
         log(false, `[6b] MISMATCH — expected: "${expectedCookie}" got: "${sbCookies[0]}"`)
       }
 
-      // After writing cookies, immediately re-read the session
       const { data: sessionCheck } = await supabase.auth.getSession()
       log(
         !!sessionCheck.session,
@@ -111,7 +108,7 @@ export function LoginForm() {
           <Input
             id="password"
             type="password"
-            placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
+            placeholder="Enter your password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -120,15 +117,22 @@ export function LoginForm() {
         </div>
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing in\u2026</>
-            : 'Sign in'
-          }
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Signing in…
+            </>
+          ) : (
+            'Sign in'
+          )}
         </Button>
 
         <p className="text-center text-xs text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
+          <Link
+            href="/signup"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
             Sign up
           </Link>
         </p>
@@ -137,7 +141,7 @@ export function LoginForm() {
       {logs.length > 0 && (
         <div className="mt-2 rounded-lg border border-yellow-400/40 bg-yellow-50 p-3 dark:border-yellow-400/20 dark:bg-yellow-950/30">
           <p className="mb-2 text-xs font-semibold text-yellow-800 dark:text-yellow-300">
-            \ud83d\udd0d Login trace
+            🔍 Login trace
           </p>
           <ul className="flex flex-col gap-1">
             {logs.map((entry, i) => (
