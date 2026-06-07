@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { DashboardClient } from '@/features/dashboard/DashboardClient'
+import { DashboardShell } from '@/features/dashboard/DashboardShell'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 
@@ -16,5 +16,5 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  return <DashboardClient analyses={analyses ?? []} />
+  return <DashboardShell analyses={analyses ?? []} />
 }
