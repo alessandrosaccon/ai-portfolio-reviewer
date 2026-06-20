@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 <h1>AI Portfolio Reviewer</h1>
 
@@ -312,4 +312,3 @@ This is primarily a portfolio project, but issues and pull requests are welcome.
 ## License
 
 [MIT](LICENSE)
-]]>
