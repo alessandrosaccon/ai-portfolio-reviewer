@@ -32,10 +32,18 @@ Most job seekers apply blindly — no idea how well their CV matches the role, w
 
 ## Screenshots
 
-> 📸 _Screenshots incoming — dashboard, analysis result, mobile view._
->
-> _The app is live at [ai-portfolio-reviewer-blush.vercel.app](https://ai-portfolio-reviewer-blush.vercel.app). See it in action there while screenshot assets are being added._
+<img width="1470" height="769" alt="Screenshot 2026-06-20 alle 12 12 53" src="https://github.com/user-attachments/assets/e1d9978d-4155-49ed-b43a-37bd6192738f" />
 
+<img width="1466" height="767" alt="Screenshot 2026-06-20 alle 12 17 13" src="https://github.com/user-attachments/assets/8cedd924-fee5-4706-8b19-b38c6895ea1a" />
+
+<img width="1467" height="767" alt="Screenshot 2026-06-20 alle 12 13 23" src="https://github.com/user-attachments/assets/4f8cf12c-224b-41aa-a55b-9870b33f7879" />
+
+
+<img width="1467" height="763" alt="Screenshot 2026-06-20 alle 12 14 53" src="https://github.com/user-attachments/assets/6efdb03c-163b-4149-8cee-d81781f19a41" />
+
+<img width="1465" height="762" alt="Screenshot 2026-06-20 alle 12 16 18" src="https://github.com/user-attachments/assets/43ef3ced-684a-44c5-8787-8307e3ba3e60" />
+
+<img width="1465" height="762" alt="Screenshot 2026-06-20 alle 12 16 46" src="https://github.com/user-attachments/assets/e04de438-748f-4f00-be31-22441f4e3c77" />
 ---
 
 ## Features
