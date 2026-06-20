@@ -314,9 +314,3 @@ This is primarily a portfolio project, but issues and pull requests are welcome.
 **Alessandro Saccon**
 
 [alessandrosaccon.com](https://alessandrosaccon.com) · [GitHub @alessandrosaccon](https://github.com/alessandrosaccon)
-
----
-
-## License
-
-[MIT](LICENSE)
